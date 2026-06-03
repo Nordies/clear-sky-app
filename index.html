@@ -429,55 +429,54 @@ function getTonightHours(){
   return hours;
 }
 
-// Fetch cloud for grid points — one model at a time
-async function fetchModel(pts, model){
-  const lats=pts.map(p=>p.lat).join(',');
-  const lons=pts.map(p=>p.lon).join(',');
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=${model}`;
-  const r=await fetch(url);
-  const data=await r.json();
-  // Open-Meteo returns array when multiple locations, single object for one location
-  const arr=Array.isArray(data)?data:[data];
-  // Ensure we have one entry per point; pad with nulls if mismatch
-  while(arr.length<pts.length) arr.push({hourly:{time:[],cloudcover:[]}});
-  return arr;
+// Fetch one model for a batch of points
+// Open-Meteo: one model per request, multiple locations → returns JSON array
+async function fetchModelBatch(pts, model, targetHours){
+  const BATCH = 100;
+  const out = [];
+  for(let i=0; i<pts.length; i+=BATCH){
+    const slice = pts.slice(i, i+BATCH);
+    const lats = slice.map(p=>p.lat).join(',');
+    const lons  = slice.map(p=>p.lon).join(',');
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=${model}`;
+    try{
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data = await r.json();
+      const arr = Array.isArray(data) ? data : [data];
+      while(arr.length < slice.length) arr.push({hourly:{time:[],cloudcover:[]}});
+      arr.slice(0, slice.length).forEach(d => out.push(avgHours(d.hourly, targetHours)));
+    }catch(e){
+      slice.forEach(() => out.push(null));
+    }
+  }
+  return out;
 }
 
-// Average cloud across hours — NaN-safe
+// Average cloud across target hours — fully NaN-safe
 function avgHours(hourly, hours){
-  if(!hourly||!hourly.time||!hourly.cloudcover) return null;
+  if(!hourly || !Array.isArray(hourly.time) || !Array.isArray(hourly.cloudcover)) return null;
   let sum=0, cnt=0;
-  hours.forEach(h=>{
-    const idx=hourly.time.indexOf(h);
-    if(idx>=0){
-      const v=hourly.cloudcover[idx];
-      if(v!==null&&v!==undefined&&!isNaN(v)){sum+=v;cnt++;}
-    }
-  });
-  return cnt>0 ? Math.round(sum/cnt) : null;
+  for(const h of hours){
+    const idx = hourly.time.indexOf(h);
+    if(idx < 0) continue;
+    const v = Number(hourly.cloudcover[idx]);
+    if(!isNaN(v)){ sum += v; cnt++; }
+  }
+  return cnt > 0 ? Math.round(sum/cnt) : null;
 }
 
 // Main scan
 async function runScan(windowH){
   allGridPts = makeGrid();
   const targetHours = getTargetHours(windowH);
-  const models = ['icon_eu','ecmwf_ifs04','gfs_seamless'];
+  const models    = ['icon_eu','ecmwf_ifs04','gfs_seamless'];
   const modelKeys = ['iconeu','ecmwf','gfs'];
 
-  // Fetch all 3 models in parallel
-  const results = await Promise.allSettled(
-    models.map(m => fetchModel(allGridPts, m))
-  );
-
-  // Parse results — fetchModel now always returns array
-  modelKeys.forEach((key, mi) => {
-    if(results[mi].status==='fulfilled'){
-      const arr=results[mi].value;
-      allGridClouds[key] = arr.map(d => avgHours(d.hourly, targetHours));
-    } else {
-      allGridClouds[key] = allGridPts.map(()=>null);
-    }
-  });
+  // Fetch each model sequentially (avoids hammering free API)
+  for(let mi=0; mi<models.length; mi++){
+    allGridClouds[modelKeys[mi]] = await fetchModelBatch(allGridPts, models[mi], targetHours);
+  }
 
   // Compute multi-model average per point
   const avgClouds = allGridPts.map((_,i) => {
@@ -688,18 +687,16 @@ function drawMap(){
 async function loadHourlyStrip(){
   try{
     const hours=getTonightHours();
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu,ecmwf_ifs04,gfs_seamless`;
-    const r=await fetch(url); const data=await r.json();
-    const arr=Array.isArray(data)?data:[data];
+    // Fetch ICON-EU only for the strip (fast, single model)
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu`;
+    const r=await fetch(url); const rawData=await r.json();
+    const singleD = Array.isArray(rawData) ? rawData[0] : rawData;
     const el=document.getElementById('hour-strip');
 
-    // Get min cloud hour
+    // Get cloud per hour
     const avgs=hours.map(h=>{
-      const vals=arr.map(d=>{
-        const idx=d.hourly?.time?.indexOf(h);
-        return idx>=0?d.hourly.cloudcover[idx]:null;
-      }).filter(v=>v!==null);
-      return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):null;
+      const v=avgHours(singleD.hourly, [h]);
+      return v;
     });
     const minAvg=Math.min(...avgs.filter(v=>v!==null));
 
@@ -723,16 +720,22 @@ async function loadHourlyStrip(){
 async function loadModels(){
   try{
     const hours=getTargetHours(currentWindow);
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu,ecmwf_ifs04,gfs_seamless`;
-    const r=await fetch(url); const data=await r.json();
-    const arr=Array.isArray(data)?data:[data];
-    const labels=['ICON-EU','ECMWF','GFS'];
-    const colors=['#38bdf8','#a78bfa','#4ade80'];
-
-    const vals=arr.map((d,i)=>{
-      const avg=avgHours(d.hourly, hours);
-      return {label:labels[i], color:colors[i], val:avg};
-    }).filter(d=>d.val!==null);
+    // Fetch each model separately
+    const modelDefs=[
+      {model:'icon_eu',     label:'ICON-EU', color:'#38bdf8'},
+      {model:'ecmwf_ifs04', label:'ECMWF',   color:'#a78bfa'},
+      {model:'gfs_seamless',label:'GFS',     color:'#4ade80'},
+    ];
+    const vals=[];
+    for(const md of modelDefs){
+      try{
+        const ru=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=${md.model}`);
+        const rd=await ru.json();
+        const d=Array.isArray(rd)?rd[0]:rd;
+        const avg=avgHours(d.hourly, hours);
+        if(avg!==null) vals.push({label:md.label, color:md.color, val:avg});
+      }catch(e){}
+    }
 
     document.getElementById('model-compare').innerHTML=vals.map(d=>`
       <div class="model-row">

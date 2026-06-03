@@ -7,7 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Clear Sky">
-<meta name="description" content="Find cloud-free zones near Rovaniemi for aurora hunting">
 <title>Clear Sky Finder — Rovaniemi</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -15,72 +14,83 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#060810;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#fff;overflow-x:hidden}
-#app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
-.logo-bar{display:flex;justify-content:center;align-items:center;padding:10px 20px 4px;background:#060810}
-.logo-bar img{height:36px;width:auto;object-fit:contain}
-.sbar{display:flex;justify-content:space-between;align-items:center;padding:4px 20px 6px;font-size:11px;color:rgba(255,255,255,0.3)}
-.tabs{display:flex;border-bottom:0.5px solid #151525;background:#060810;position:sticky;top:0;z-index:10}
-.tab{flex:1;padding:9px 0 7px;font-size:10px;color:rgba(255,255,255,0.3);text-align:center;cursor:pointer;border-bottom:2px solid transparent;transition:color 0.15s;user-select:none}
-.tab.on{color:#38bdf8;border-bottom-color:#38bdf8}
-.tab i{font-size:13px;display:block;margin:0 auto 1px}
-.scr{display:none;padding:14px;flex:1}
-.scr.on{display:block}
-.sec{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;text-transform:uppercase;margin:14px 0 8px}
-.card{background:#0d1020;border:0.5px solid #1a1a30;border-radius:14px;padding:13px;margin-bottom:8px}
-.row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid #131325}
-.row:last-child{border-bottom:none}
-.ldot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;margin-right:5px;vertical-align:middle;animation:pulse 2s infinite}
+#app{max-width:430px;margin:0 auto;min-height:100vh}
+.logo-bar{display:flex;justify-content:center;padding:10px 0 4px;background:#060810}
+.logo-bar img{height:34px;width:auto;object-fit:contain}
+.sbar{display:flex;justify-content:space-between;align-items:center;padding:3px 16px 6px;font-size:11px;color:rgba(255,255,255,0.3)}
+.ldot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;margin-right:4px;vertical-align:middle;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.loading{font-size:11px;color:rgba(255,255,255,0.3);padding:16px 0;text-align:center}
-.bottom-pad{height:env(safe-area-inset-bottom,16px)}
+.tabs{display:flex;border-bottom:0.5px solid #151525;background:#060810;position:sticky;top:0;z-index:10}
+.tab{flex:1;padding:9px 0 6px;font-size:10px;color:rgba(255,255,255,0.3);text-align:center;cursor:pointer;border-bottom:2px solid transparent;user-select:none}
+.tab.on{color:#38bdf8;border-bottom-color:#38bdf8}
+.tab i{font-size:13px;display:block;margin:0 auto 2px}
+.scr{display:none;padding:12px 14px}
+.scr.on{display:block}
+.card{background:#0d1020;border:0.5px solid #1a1a30;border-radius:14px;padding:13px;margin-bottom:8px}
+.sec{font-size:10px;color:rgba(255,255,255,0.28);letter-spacing:0.08em;text-transform:uppercase;margin:14px 0 8px}
+.row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #131325}
+.row:last-child{border-bottom:none}
+.loading{font-size:11px;color:rgba(255,255,255,0.3);padding:14px 0;text-align:center}
+.bottom-pad{height:env(safe-area-inset-bottom,20px)}
 a{color:#38bdf8;text-decoration:none}
-.tap-btn{display:flex;align-items:center;justify-content:space-between;background:#0d1020;border:0.5px solid #1a1a30;border-radius:12px;padding:11px 14px;margin-bottom:8px;cursor:pointer;transition:background 0.15s}
-.tap-btn:active{background:#151530}
-.tap-btn-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-
-/* Clear Sky tab */
-.hero-card{background:#0d1020;border:0.5px solid #1a1a30;border-radius:16px;padding:16px;margin-bottom:10px}
-.best-spot-label{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
-.best-spot-name{font-size:22px;font-weight:500;color:#fff;margin-bottom:4px}
-.best-spot-meta{font-size:12px;color:rgba(255,255,255,0.45);display:flex;gap:12px;flex-wrap:wrap}
-.best-spot-cloud{font-size:48px;font-weight:500;line-height:1;margin:10px 0 4px}
-.confidence-bar{height:4px;background:#151525;border-radius:2px;overflow:hidden;margin-top:10px}
-.confidence-fill{height:100%;border-radius:2px;transition:width 0.5s}
-
-/* Map canvas */
-.map-wrap{background:#0a0c1a;border:0.5px solid #1a1a30;border-radius:14px;overflow:hidden;margin-bottom:10px;position:relative}
-#skymap{width:100%;display:block;cursor:crosshair}
-.map-legend{display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;border-top:0.5px solid #1a1a30}
-.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(255,255,255,0.45)}
-.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-
-/* Spot list */
-.spot-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid #131325}
-.spot-row:last-child{border-bottom:none}
-.spot-rank{font-size:11px;color:rgba(255,255,255,0.3);width:18px;flex-shrink:0;text-align:center}
-.spot-name{font-size:12px;color:#fff;flex:1}
-.spot-dist{font-size:11px;color:rgba(255,255,255,0.4);flex-shrink:0}
-.spot-cloud-pill{font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;flex-shrink:0;min-width:40px;text-align:center}
-
-/* Hourly */
-.hour-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.hour-cell{background:#0d1020;border:0.5px solid #1a1a30;border-radius:10px;padding:8px 6px;text-align:center}
-.hour-time{font-size:10px;color:rgba(255,255,255,0.35);margin-bottom:5px}
-.hour-cloud{font-size:16px;font-weight:500}
-.hour-model{font-size:9px;color:rgba(255,255,255,0.25);margin-top:3px}
-
-/* Model comparison */
-.model-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid #131325}
-.model-row:last-child{border-bottom:none}
-.model-name{font-size:12px;font-weight:500;color:#fff;width:80px;flex-shrink:0}
-.model-bar-wrap{flex:1;height:6px;background:#151525;border-radius:3px;overflow:hidden}
-.model-bar{height:100%;border-radius:3px}
-.model-val{font-size:12px;font-weight:500;width:36px;text-align:right;flex-shrink:0}
-.model-badge{font-size:10px;padding:2px 7px;border-radius:8px;flex-shrink:0}
-
-/* Windy */
+.tap-btn{display:flex;align-items:center;justify-content:space-between;background:#0d1020;border:0.5px solid #1a1a30;border-radius:12px;padding:11px 14px;margin-bottom:8px;cursor:pointer}
+.tap-btn:active{background:#131328}
 .map-frame{border-radius:12px;overflow:hidden;border:0.5px solid #1a1a30;background:#0a0c1a;margin-bottom:8px;position:relative}
-.map-overlay-tap{position:absolute;top:0;left:0;right:0;bottom:0;z-index:10;cursor:pointer}
+.map-overlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:5;cursor:pointer}
+
+/* ── HERO CARD ── */
+.hero{background:linear-gradient(145deg,#0d1528,#0a0f1e);border:0.5px solid #1e2840;border-radius:18px;padding:16px;margin-bottom:10px}
+.hero-badge{font-size:10px;color:#38bdf8;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:#38bdf8;animation:pulse 2s infinite}
+.hero-destination{font-size:24px;font-weight:500;color:#fff;margin-bottom:3px;line-height:1.2}
+.hero-sub{font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap}
+.hero-cloud{font-size:56px;font-weight:500;line-height:1;margin-bottom:2px}
+.hero-cloud-label{font-size:11px;color:rgba(255,255,255,0.4)}
+.hero-divider{height:0.5px;background:#1e2840;margin:12px 0}
+.hero-meta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hero-meta-item{text-align:center}
+.hero-meta-val{font-size:14px;font-weight:500;color:#fff}
+.hero-meta-lbl{font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px}
+.clear-bar{height:5px;background:#151525;border-radius:3px;overflow:hidden;margin-top:12px}
+.clear-fill{height:100%;border-radius:3px;transition:width 0.6s}
+
+/* ── TIME WINDOW TABS ── */
+.time-tabs{display:flex;gap:6px;margin-bottom:10px}
+.time-tab{flex:1;text-align:center;padding:7px 4px;border-radius:10px;font-size:11px;font-weight:500;cursor:pointer;border:0.5px solid #1a1a30;background:#0d1020;color:rgba(255,255,255,0.4);transition:all 0.15s}
+.time-tab.on{background:rgba(56,189,248,0.12);border-color:#38bdf8;color:#38bdf8}
+
+/* ── SPOT LIST ── */
+.spot-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid #131325}
+.spot-item:last-child{border-bottom:none}
+.spot-num{font-size:11px;color:rgba(255,255,255,0.25);width:16px;flex-shrink:0;text-align:center}
+.spot-body{flex:1;min-width:0}
+.spot-name{font-size:13px;font-weight:500;color:#fff}
+.spot-detail{font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;display:flex;gap:8px}
+.spot-models{display:flex;gap:3px;margin-top:4px}
+.model-dot{font-size:9px;padding:1px 5px;border-radius:6px}
+.spot-cloud{font-size:15px;font-weight:500;flex-shrink:0;min-width:38px;text-align:right}
+.spot-conf{font-size:9px;flex-shrink:0;color:rgba(255,255,255,0.3)}
+
+/* ── MAP ── */
+#skymap{width:100%;display:block}
+
+/* ── HOURLY STRIP ── */
+.hour-strip{display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.hour-strip::-webkit-scrollbar{display:none}
+.hour-chip{flex-shrink:0;background:#0d1020;border:0.5px solid #1a1a30;border-radius:10px;padding:7px 8px;text-align:center;min-width:52px}
+.hour-chip.best{border-color:#38bdf8;background:rgba(56,189,248,0.08)}
+.hour-chip-time{font-size:10px;color:rgba(255,255,255,0.35);margin-bottom:4px}
+.hour-chip-cloud{font-size:14px;font-weight:500}
+.hour-chip-label{font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px}
+
+/* ── MODEL COMPARE ── */
+.model-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:0.5px solid #131325}
+.model-row:last-child{border-bottom:none}
+.model-name{font-size:12px;font-weight:500;width:72px;flex-shrink:0}
+.model-bar-wrap{flex:1;height:5px;background:#151525;border-radius:3px;overflow:hidden}
+.model-bar{height:100%;border-radius:3px}
+.model-val{font-size:12px;font-weight:500;width:34px;text-align:right;flex-shrink:0}
+.model-badge{font-size:9px;padding:2px 6px;border-radius:7px;flex-shrink:0;width:44px;text-align:center}
 </style>
 </head>
 <body>
@@ -89,848 +99,705 @@ a{color:#38bdf8;text-decoration:none}
 <div class="logo-bar">
   <img src="logo.png" alt="Nordies Tour" onerror="this.style.display='none'">
 </div>
-
 <div class="sbar">
-  <span id="time-now">—</span>
-  <span style="color:rgba(255,255,255,0.2)">Clear Sky Finder · Rovaniemi</span>
+  <span id="clock">—</span>
+  <span style="color:rgba(255,255,255,0.2)">Clear Sky · Rovaniemi</span>
   <span><span class="ldot"></span>Live</span>
 </div>
 
 <div class="tabs">
-  <div class="tab on" onclick="go('sky',this)"><i class="ti ti-cloud-off"></i>Clear Sky</div>
-  <div class="tab" onclick="go('hourly',this)"><i class="ti ti-clock"></i>Hourly</div>
+  <div class="tab on" onclick="go('finder',this)"><i class="ti ti-navigation"></i>Finder</div>
+  <div class="tab" onclick="go('map',this)"><i class="ti ti-map-2"></i>Map</div>
+  <div class="tab" onclick="go('models',this)"><i class="ti ti-chart-bar"></i>Models</div>
   <div class="tab" onclick="go('satellite',this)"><i class="ti ti-satellite"></i>Satellite</div>
-  <div class="tab" onclick="go('windy',this)"><i class="ti ti-map"></i>Windy</div>
-  <div class="tab" onclick="go('aurora',this)"><i class="ti ti-star"></i>Aurora</div>
+  <div class="tab" onclick="go('windy',this)"><i class="ti ti-wind"></i>Windy</div>
 </div>
 
-<!-- CLEAR SKY TAB -->
-<div id="t-sky" class="scr on">
-  <div class="hero-card" id="hero-card">
-    <div class="best-spot-label">Best spot tonight</div>
-    <div class="loading">Scanning 250 km radius...</div>
+<!-- ═══ FINDER TAB ═══ -->
+<div id="t-finder" class="scr on">
+
+  <!-- Time window selector -->
+  <div class="time-tabs" id="time-tabs">
+    <div class="time-tab on" onclick="setWindow(1,this)">Now +1h</div>
+    <div class="time-tab" onclick="setWindow(2,this)">+2h</div>
+    <div class="time-tab" onclick="setWindow(3,this)">+3h</div>
+    <div class="time-tab" onclick="setWindow(5,this)">+5h</div>
   </div>
 
-  <div class="sec">Cloud map — 250 km radius</div>
-  <div class="map-wrap">
-    <canvas id="skymap" height="300"></canvas>
-    <div class="map-legend">
-      <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>0–20% clear</div>
-      <div class="leg"><div class="leg-dot" style="background:#facc15"></div>21–50%</div>
-      <div class="leg"><div class="leg-dot" style="background:#f97316"></div>51–80%</div>
-      <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>81–100% cloudy</div>
+  <!-- Hero: best spot -->
+  <div class="hero" id="hero">
+    <div class="hero-badge"><div class="hero-badge-dot"></div>Best clear spot right now</div>
+    <div class="loading" style="padding:20px 0">Scanning 313 grid points across 250 km...</div>
+  </div>
+
+  <!-- Rovaniemi now -->
+  <div class="card" id="rov-now">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:3px">Rovaniemi right now</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35)">Multi-model average</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:28px;font-weight:500" id="rov-cloud">—</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.35)">cloud cover</div>
+      </div>
+    </div>
+    <div style="height:4px;background:#151525;border-radius:2px;overflow:hidden;margin-top:10px">
+      <div id="rov-bar" style="height:100%;border-radius:2px;width:0%;transition:width 0.5s"></div>
     </div>
   </div>
 
-  <div class="sec">Top clear spots tonight</div>
+  <!-- Top spots -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px">
+    <div class="sec" style="margin:0">Top clear spots</div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.3)" id="scan-info">—</div>
+  </div>
   <div class="card" id="spot-list"><div class="loading">Loading...</div></div>
 
-  <div style="font-size:10px;color:rgba(255,255,255,0.2);text-align:center;margin-top:6px">
-    Model: ICON-EU · <span id="scan-time">—</span> · 313 grid points scanned
+  <!-- Tonight hourly strip -->
+  <div class="sec">Tonight — Rovaniemi hourly</div>
+  <div class="hour-strip" id="hour-strip">
+    <div class="loading">Loading...</div>
+  </div>
+
+  <div style="font-size:10px;color:rgba(255,255,255,0.2);text-align:center;margin:10px 0 4px" id="footer-info">
+    Sources: ICON-EU · ECMWF · GFS · avg confidence shown per spot
   </div>
   <div class="bottom-pad"></div>
 </div>
 
-<!-- HOURLY TAB -->
-<div id="t-hourly" class="scr">
-  <div class="sec">Tonight's cloud forecast — Rovaniemi</div>
-  <div class="hour-grid" id="hourly-rovaniemi" style="margin-bottom:12px">
-    <div class="loading" style="grid-column:1/-1">Loading...</div>
+<!-- ═══ MAP TAB ═══ -->
+<div id="t-map" class="scr">
+  <div class="sec">Cloud map — 250 km radius</div>
+  <div style="background:#0a0c1a;border:0.5px solid #1a1a30;border-radius:14px;overflow:hidden;margin-bottom:8px">
+    <canvas id="skymap" height="300"></canvas>
   </div>
-
-  <div class="sec">Hourly — Best spot</div>
-  <div class="hour-grid" id="hourly-best">
-    <div class="loading" style="grid-column:1/-1">Find best spot first...</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;padding:0 4px 8px">
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,0.45)"><div style="width:10px;height:10px;border-radius:50%;background:#22c55e"></div>0–20% clear</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,0.45)"><div style="width:10px;height:10px;border-radius:50%;background:#facc15"></div>21–50%</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,0.45)"><div style="width:10px;height:10px;border-radius:50%;background:#f97316"></div>51–80%</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(255,255,255,0.45)"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>81%+ cloudy</div>
   </div>
-
-  <div class="sec" style="margin-top:16px">FMI forecast — Rovaniemi</div>
-  <div class="card" id="fmi-hourly"><div class="loading">Loading FMI data...</div></div>
-
-  <div class="sec">Yr.no forecast</div>
-  <div class="card" id="yr-hourly"><div class="loading">Loading Yr data...</div></div>
-
+  <div class="sec">Top 5 spots on map</div>
+  <div class="card" id="map-spot-list"><div class="loading">Run Finder first</div></div>
   <div class="bottom-pad"></div>
 </div>
 
-<!-- MODELS TAB -->
+<!-- ═══ MODELS TAB ═══ -->
 <div id="t-models" class="scr">
-  <div class="sec">Model comparison — Rovaniemi tonight</div>
-  <div class="card" id="model-compare"><div class="loading">Loading models...</div></div>
+  <div class="sec">Model comparison — Rovaniemi now</div>
+  <div class="card" id="model-compare"><div class="loading">Loading...</div></div>
 
-  <div class="sec">Model guide</div>
-  <div class="card">
-    <div class="row">
-      <div style="font-size:12px;color:#fff;font-weight:500">ICON-EU</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">Best for winter Finland. 7km res, 3h intervals</div>
-    </div>
-    <div class="row">
-      <div style="font-size:12px;color:#fff;font-weight:500">ECMWF</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">Best for autumn. Global, 9km res</div>
-    </div>
-    <div class="row">
-      <div style="font-size:12px;color:#fff;font-weight:500">FMI</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">Finnish Met Institute. 2.5km local accuracy</div>
-    </div>
-    <div class="row">
-      <div style="font-size:12px;color:#fff;font-weight:500">Yr (MetNo)</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">Norwegian model, good for Lapland</div>
-    </div>
-    <div class="row">
-      <div style="font-size:12px;color:#fff;font-weight:500">GFS</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">US model, useful for 5–7 day outlook</div>
-    </div>
-  </div>
-
-  <div class="sec">Model agreement score</div>
+  <div class="sec">Model agreement</div>
   <div class="card" id="model-agreement"><div class="loading">Calculating...</div></div>
 
-  <div class="bottom-pad"></div>
-</div>
-
-<!-- WINDY TAB -->
-<div id="t-windy" class="scr">
-  <div style="display:flex;gap:8px;margin-bottom:10px">
-    <div class="tap-btn" style="flex:1" id="btn-iconeu" onclick="setWindyModel('iconEu')">
-      <div style="flex:1">
-        <div style="font-size:12px;font-weight:500;color:#fff">ICON-EU</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.4)">Winter · recommended</div>
+  <div class="sec">Which model to trust</div>
+  <div class="card">
+    <div class="row">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:#38bdf8">ICON-EU</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Best for winter Lapland · 7 km · 3h</div>
       </div>
-      <div id="badge-iconeu" style="font-size:10px;background:rgba(56,189,248,0.15);color:#38bdf8;padding:2px 8px;border-radius:8px">Active</div>
+      <div style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(56,189,248,0.12);color:#38bdf8">Winter ✓</div>
     </div>
-    <div class="tap-btn" style="flex:1" id="btn-ecmwf" onclick="setWindyModel('ecmwf')">
-      <div style="flex:1">
-        <div style="font-size:12px;font-weight:500;color:#fff">ECMWF</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.4)">Autumn · global</div>
+    <div class="row">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:#a78bfa">ECMWF IFS</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Best for autumn · global · 9 km</div>
       </div>
-      <div id="badge-ecmwf" style="font-size:10px;color:rgba(255,255,255,0.3);padding:2px 8px">—</div>
+      <div style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(167,139,250,0.12);color:#a78bfa">Autumn ✓</div>
     </div>
-  </div>
-
-  <div class="map-frame" id="windy-frame-wrap">
-    <iframe id="windy-iframe"
-      src="https://embed.windy.com/embed2.html?lat=66.5&lon=25.73&detailLat=66.5&detailLon=25.73&width=400&height=320&zoom=5&level=surface&overlay=clouds&product=iconEu&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1"
-      style="width:100%;height:320px;border:none;display:block"
-      allowfullscreen loading="lazy">
-    </iframe>
-    <div class="map-overlay-tap" onclick="window.open('https://www.windy.com/?clouds,66.5,25.73,5','_blank')"></div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px">
-    <div class="tap-btn" onclick="window.open('https://www.windy.com/?clouds,66.5,25.73,5','_blank')">
-      <div class="tap-btn-icon" style="background:#0a1520;color:#38bdf8"><i class="ti ti-cloud" aria-hidden="true"></i></div>
-      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Cloud layer</div></div>
-      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
+    <div class="row">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:#4ade80">GFS</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">US model · 5–7 day outlook</div>
+      </div>
+      <div style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(74,222,128,0.12);color:#4ade80">Long range</div>
     </div>
-    <div class="tap-btn" onclick="window.open('https://www.windy.com/?rain,66.5,25.73,5','_blank')">
-      <div class="tap-btn-icon" style="background:#0a1a10;color:#4ade80"><i class="ti ti-cloud-rain" aria-hidden="true"></i></div>
-      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Precipitation</div></div>
-      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
+    <div class="row">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:#fbbf24">FMI</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Finnish Met · 2.5 km local accuracy</div>
+      </div>
+      <div style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(251,191,36,0.12);color:#fbbf24">Most local</div>
     </div>
-  </div>
-
-  <div class="sec">Other cloud apps</div>
-  <div class="tap-btn" onclick="window.open('https://www.yr.no/en/map/details/2-643492/Norway/Troms+og+Finnmark/Troms%C3%B8/Troms%C3%B8?lat=66.5&lon=25.73','_blank')">
-    <div class="tap-btn-icon" style="background:#0a1520;color:#60a5fa"><i class="ti ti-map-2" aria-hidden="true"></i></div>
-    <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Yr.no</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Norwegian Met · cloud map</div></div>
-    <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
-  </div>
-  <div class="tap-btn" onclick="window.open('https://en.ilmatieteenlaitos.fi/local-weather/rovaniemi','_blank')">
-    <div class="tap-btn-icon" style="background:#0f1a0a;color:#4ade80"><i class="ti ti-flag" aria-hidden="true"></i></div>
-    <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">FMI</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Finnish Met Institute · 2.5km</div></div>
-    <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
-  </div>
-  <div class="tap-btn" onclick="window.open('https://www.meteoblue.com/en/weather/maps/#coords=5/66.5/25.73&map=clouds~daily~auto~sfc~none','_blank')">
-    <div class="tap-btn-icon" style="background:#1a100a;color:#fb923c"><i class="ti ti-cloud-storm" aria-hidden="true"></i></div>
-    <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Meteoblue</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Multi-model cloud maps</div></div>
-    <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
-  </div>
-  <div class="tap-btn" onclick="window.open('https://www.ventusky.com/?p=66.5;25.7;5&l=clouds','_blank')">
-    <div class="tap-btn-icon" style="background:#0a0a1a;color:#a78bfa"><i class="ti ti-satellite" aria-hidden="true"></i></div>
-    <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Ventusky</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Visual cloud animation</div></div>
-    <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
   </div>
   <div class="bottom-pad"></div>
 </div>
 
-<!-- SATELLITE TAB -->
+<!-- ═══ SATELLITE TAB ═══ -->
 <div id="t-satellite" class="scr">
-
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-    <span style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.7)"><span class="ldot"></span>Live satellite imagery</span>
-    <span id="sat-updated" style="font-size:10px;color:rgba(255,255,255,0.25)">—</span>
+  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+    <button onclick="setSat('eumetsat')" id="sb-eumetsat" class="sat-btn on">EUMETSAT</button>
+    <button onclick="setSat('fmi')" id="sb-fmi" class="sat-btn">FMI Radar</button>
+    <button onclick="setSat('nasa')" id="sb-nasa" class="sat-btn">NASA</button>
+    <button onclick="setSat('sat24')" id="sb-sat24" class="sat-btn">Sat24</button>
   </div>
 
-  <!-- Layer selector -->
-  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap" id="sat-btns">
-    <button onclick="setSat('eumetsat')" id="sb-eumetsat"
-      style="font-size:11px;padding:5px 12px;border-radius:20px;border:0.5px solid #38bdf8;background:rgba(56,189,248,0.15);color:#38bdf8;cursor:pointer">
-      EUMETSAT
-    </button>
-    <button onclick="setSat('fmi')" id="sb-fmi"
-      style="font-size:11px;padding:5px 12px;border-radius:20px;border:0.5px solid #1a1a30;background:transparent;color:rgba(255,255,255,0.45);cursor:pointer">
-      FMI Radar
-    </button>
-    <button onclick="setSat('nasa')" id="sb-nasa"
-      style="font-size:11px;padding:5px 12px;border-radius:20px;border:0.5px solid #1a1a30;background:transparent;color:rgba(255,255,255,0.45);cursor:pointer">
-      NASA Worldview
-    </button>
-    <button onclick="setSat('sat24')" id="sb-sat24"
-      style="font-size:11px;padding:5px 12px;border-radius:20px;border:0.5px solid #1a1a30;background:transparent;color:rgba(255,255,255,0.45);cursor:pointer">
-      Sat24
-    </button>
-  </div>
-
-  <!-- EUMETSAT — default, embeddable -->
   <div id="sat-eumetsat" class="sat-panel">
-    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">
-      EUMETSAT Meteosat · visible cloud imagery · Europe & Lapland
-    </div>
-    <div style="background:#0a0c1a;border:0.5px solid #1a1a30;border-radius:12px;overflow:hidden;margin-bottom:8px;position:relative">
-      <img
-        id="eumetsat-img"
-        src="https://eumetview.eumetsat.int/static-images/latestImages/EUMETSAT_MSG_RGBNatColourEnhncd_centered_1024.jpg"
-        style="width:100%;display:block;border-radius:12px"
-        alt="EUMETSAT latest cloud image"
-        onerror="document.getElementById('eumetsat-fallback').style.display='block';this.style.display='none'">
-      <div id="eumetsat-fallback" style="display:none;padding:20px;text-align:center">
-        <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:10px">Image blocked by browser security policy.<br>Tap to open directly.</p>
-        <a href="https://eumetview.eumetsat.int/static-images/latestImages/EUMETSAT_MSG_RGBNatColourEnhncd_centered_1024.jpg"
-          target="_blank" style="color:#38bdf8;font-size:12px">Open EUMETSAT image ↗</a>
-      </div>
-    </div>
-    <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:8px">
-      Updates every 15 min · Natural colour RGB · Shows cloud cover across Europe
-    </div>
-    <!-- EUMETSAT Lapland-focused -->
-    <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:6px">Lapland region zoom</div>
-    <div style="background:#0a0c1a;border:0.5px solid #1a1a30;border-radius:12px;overflow:hidden;margin-bottom:8px">
-      <img
-        src="https://eumetview.eumetsat.int/static-images/latestImages/EUMETSAT_MSG_RGBNatColourEnhncd_centered_1024.jpg"
-        style="width:100%;display:block;border-radius:12px;object-fit:cover;object-position:60% 15%;height:200px"
-        alt="EUMETSAT Lapland region"
-        onerror="this.style.display='none'">
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">EUMETSAT Meteosat · Europe cloud imagery · 15 min updates</div>
+    <div class="map-frame">
+      <img src="https://eumetview.eumetsat.int/static-images/latestImages/EUMETSAT_MSG_RGBNatColourEnhncd_centered_1024.jpg"
+        style="width:100%;display:block" alt="EUMETSAT"
+        onerror="this.parentElement.innerHTML='<div style=\'padding:16px;text-align:center\'><p style=\'font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px\'>Tap to open</p><a href=\'https://view.eumetsat.int\' target=\'_blank\' style=\'color:#38bdf8\'>EUMETSAT viewer ↗</a></div>'">
     </div>
     <div class="tap-btn" onclick="window.open('https://view.eumetsat.int/productviewer?v=default&layer=msgiodc:msg_fes:rgb_naturalenhncd','_blank')">
-      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">EUMETSAT full viewer</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Interactive cloud animation</div></div>
-      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)" aria-hidden="true"></i>
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">EUMETSAT full viewer</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Interactive animation</div></div>
+      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)"></i>
     </div>
   </div>
 
-  <!-- FMI -->
   <div id="sat-fmi" class="sat-panel" style="display:none">
-    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">
-      Finnish Meteorological Institute · radar + satellite · Finland
-    </div>
-    <div style="background:#0a0c1a;border:0.5px solid #1a1a30;border-radius:12px;overflow:hidden;margin-bottom:8px;position:relative">
-      <img
-        src="https://cdn.fmi.fi/observations/surface/radar/finland/dbz-20min.gif"
-        style="width:100%;display:block;border-radius:12px"
-        alt="FMI Finland radar"
-        onerror="document.getElementById('fmi-fallback').style.display='block';this.style.display='none'">
-      <div id="fmi-fallback" style="display:none;padding:20px;text-align:center">
-        <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:10px">Open FMI directly for latest imagery.</p>
-      </div>
-    </div>
-    <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:10px">FMI composite radar · Finland · 20 min loop</div>
-    <div class="tap-btn" onclick="window.open('https://en.ilmatieteenlaitos.fi/radar-observations','_blank')">
-      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">FMI radar map</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Finland cloud & precipitation</div></div>
-      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)" aria-hidden="true"></i>
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">FMI · Finland radar · 20 min loop</div>
+    <div class="map-frame">
+      <img src="https://cdn.fmi.fi/observations/surface/radar/finland/dbz-20min.gif"
+        style="width:100%;display:block" alt="FMI radar"
+        onerror="this.parentElement.innerHTML='<div style=\'padding:16px;text-align:center\'><a href=\'https://en.ilmatieteenlaitos.fi/radar-observations\' target=\'_blank\' style=\'color:#38bdf8;font-size:12px\'>Open FMI radar ↗</a></div>'">
     </div>
     <div class="tap-btn" onclick="window.open('https://en.ilmatieteenlaitos.fi/satellite-images','_blank')">
       <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">FMI satellite images</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Latest Meteosat over Finland</div></div>
-      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)" aria-hidden="true"></i>
+      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)"></i>
     </div>
   </div>
 
-  <!-- NASA Worldview -->
   <div id="sat-nasa" class="sat-panel" style="display:none">
-    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">
-      NASA Worldview · MODIS/VIIRS · true colour · yesterday
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">NASA MODIS · true colour · yesterday</div>
+    <div class="map-frame">
+      <img id="nasa-img" style="width:100%;display:block" alt="NASA MODIS Lapland"
+        onerror="this.parentElement.innerHTML='<div style=\'padding:16px;text-align:center\'><a href=\'https://worldview.earthdata.nasa.gov\' target=\'_blank\' style=\'color:#38bdf8;font-size:12px\'>Open NASA Worldview ↗</a></div>'">
     </div>
-    <div style="background:#0a0c1a;border:0.5px solid #1a1a30;border-radius:12px;overflow:hidden;margin-bottom:8px">
-      <img
-        id="nasa-img"
-        style="width:100%;display:block;border-radius:12px"
-        alt="NASA MODIS Lapland"
-        onerror="this.parentElement.innerHTML='<div style=\'padding:20px;text-align:center\'><p style=\'font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px\'>Loading NASA image...</p></div>'">
-    </div>
-    <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:10px">
-      NASA MODIS true colour · updated daily · shows cloud cover from space
-    </div>
-    <div class="tap-btn" onclick="openNASA()">
-      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">NASA Worldview — Lapland</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">True colour satellite · zoom & pan</div></div>
-      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)" aria-hidden="true"></i>
-    </div>
-    <div class="tap-btn" onclick="window.open('https://worldview.earthdata.nasa.gov/?v=15,60,40,72&l=VIIRS_NOAA20_CorrectedReflectance_TrueColor,Coastlines_15m&t='+getNASADate(),'_blank')">
-      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">VIIRS true colour (NOAA-20)</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Higher resolution than MODIS</div></div>
-      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)" aria-hidden="true"></i>
+    <div class="tap-btn" onclick="window.open('https://worldview.earthdata.nasa.gov/?v=15,60,40,72&l=MODIS_Terra_CorrectedReflectance_TrueColor,Coastlines_15m&t='+getNASADate(),'_blank')">
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">NASA Worldview — Lapland</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Zoom & pan · true colour</div></div>
+      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)"></i>
     </div>
   </div>
 
-  <!-- Sat24 -->
   <div id="sat-sat24" class="sat-panel" style="display:none">
-    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">
-      Sat24 · Meteosat infrared · Scandinavia · near real-time
-    </div>
-    <div style="background:#0a0c1a;border:0.5px solid #1a1a30;border-radius:12px;overflow:hidden;margin-bottom:8px">
-      <img
-        src="https://api.sat24.com/animated/EU/visual"
-        style="width:100%;display:block;border-radius:12px"
-        alt="Sat24 Europe cloud animation"
-        onerror="this.parentElement.innerHTML='<div style=\'padding:16px;text-align:center\'><p style=\'font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px\'>Tap to open Sat24 directly</p><a href=\'https://sat24.com/en/fi\' target=\'_blank\' style=\'color:#38bdf8;font-size:12px;\'>Open Sat24 Finland ↗</a></div>'">
-    </div>
-    <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:10px">Animated loop · Europe visible channel · updates every 15 min</div>
-    <div class="tap-btn" onclick="window.open('https://sat24.com/en/fi','_blank')">
-      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Sat24 Finland</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Infrared + visible · animated</div></div>
-      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)" aria-hidden="true"></i>
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">Sat24 · Meteosat animated · Scandinavia</div>
+    <div class="map-frame">
+      <img src="https://api.sat24.com/animated/EU/visual"
+        style="width:100%;display:block" alt="Sat24"
+        onerror="this.parentElement.innerHTML='<div style=\'padding:16px;text-align:center\'><a href=\'https://sat24.com/en/fi\' target=\'_blank\' style=\'color:#38bdf8;font-size:12px\'>Open Sat24 Finland ↗</a></div>'">
     </div>
     <div class="tap-btn" onclick="window.open('https://sat24.com/en/sc','_blank')">
       <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Sat24 Scandinavia</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Wider Nordic view</div></div>
-      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)" aria-hidden="true"></i>
+      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.3)"></i>
     </div>
-  </div>
-
-  <div style="font-size:10px;color:rgba(255,255,255,0.2);text-align:center;margin-top:8px">
-    Satellite imagery shows actual cloud cover — use alongside forecast models
   </div>
   <div class="bottom-pad"></div>
 </div>
 
-<!-- AURORA TAB -->
-<div id="t-aurora" class="scr">
-  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px">
-    <div class="card" style="text-align:center">
-      <div style="font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:6px">KP Index</div>
-      <div style="font-size:36px;font-weight:500" id="a-kp" style="color:#888">—</div>
-      <div style="font-size:11px;margin-top:4px" id="a-kp-label">Loading...</div>
+<!-- ═══ WINDY TAB ═══ -->
+<div id="t-windy" class="scr">
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <div class="tap-btn" style="flex:1" onclick="setWindyModel('iconEu')" id="wbtn-iconeu">
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">ICON-EU</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Winter · recommended</div></div>
+      <div id="wbadge-iconeu" style="font-size:10px;color:#38bdf8">Active</div>
     </div>
-    <div class="card" style="text-align:center">
-      <div style="font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:6px">Bz Component</div>
-      <div style="font-size:36px;font-weight:500" id="a-bz">—</div>
-      <div style="font-size:11px;margin-top:4px" id="a-bz-label">Loading...</div>
+    <div class="tap-btn" style="flex:1" onclick="setWindyModel('ecmwf')" id="wbtn-ecmwf">
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">ECMWF</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Autumn · global</div></div>
+      <div id="wbadge-ecmwf" style="font-size:10px;color:rgba(255,255,255,0.3)">—</div>
     </div>
   </div>
-
-  <div class="card">
-    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px">Solar wind</div>
-    <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Speed</div><div><span id="a-speed" style="font-size:13px;font-weight:500;color:#fff">—</span><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:3px">km/s</span></div></div>
-    <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Density</div><div><span id="a-density" style="font-size:13px;font-weight:500;color:#fff">—</span><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:3px">p/cm³</span></div></div>
-    <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Bt</div><div><span id="a-bt" style="font-size:13px;font-weight:500;color:#fff">—</span><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:3px">nT</span></div></div>
+  <div class="map-frame">
+    <iframe id="windy-iframe"
+      src="https://embed.windy.com/embed2.html?lat=66.5&lon=25.73&zoom=5&level=surface&overlay=clouds&product=iconEu&type=map&metricWind=km%2Fh&metricTemp=%C2%B0C"
+      style="width:100%;height:320px;border:none;display:block" allowfullscreen loading="lazy"></iframe>
+    <div class="map-overlay" onclick="window.open('https://www.windy.com/?clouds,66.5,25.73,5','_blank')"></div>
   </div>
-
-  <div class="sec">Tonight's combined score</div>
-  <div class="card" id="combined-score">
-    <div class="loading">Calculating...</div>
-  </div>
-
-  <div style="text-align:center;margin-top:10px">
-    <a href="https://www.nordiestour.com/tours" target="_blank" style="font-size:12px;color:#38bdf8">Book aurora tour at nordiestour.com ↗</a>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+    <div class="tap-btn" onclick="window.open('https://www.yr.no/en/map/details/2-643492','_blank')">
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Yr.no</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Norwegian Met</div></div>
+      <i class="ti ti-external-link" style="font-size:12px;color:rgba(255,255,255,0.3)"></i>
+    </div>
+    <div class="tap-btn" onclick="window.open('https://en.ilmatieteenlaitos.fi/local-weather/rovaniemi','_blank')">
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">FMI</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Finnish Met</div></div>
+      <i class="ti ti-external-link" style="font-size:12px;color:rgba(255,255,255,0.3)"></i>
+    </div>
+    <div class="tap-btn" onclick="window.open('https://www.meteoblue.com/en/weather/maps/#coords=5/66.5/25.73&map=clouds~daily~auto~sfc~none','_blank')">
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Meteoblue</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Multi-model maps</div></div>
+      <i class="ti ti-external-link" style="font-size:12px;color:rgba(255,255,255,0.3)"></i>
+    </div>
+    <div class="tap-btn" onclick="window.open('https://www.ventusky.com/?p=66.5;25.7;5&l=clouds','_blank')">
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Ventusky</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Visual animation</div></div>
+      <i class="ti ti-external-link" style="font-size:12px;color:rgba(255,255,255,0.3)"></i>
+    </div>
   </div>
   <div class="bottom-pad"></div>
 </div>
 
 </div>
+
+<style>
+.sat-btn{font-size:11px;padding:5px 12px;border-radius:20px;border:0.5px solid #1a1a30;background:transparent;color:rgba(255,255,255,0.45);cursor:pointer}
+.sat-btn.on{border-color:#38bdf8;background:rgba(56,189,248,0.12);color:#38bdf8}
+</style>
 
 <script>
-const ROV = { lat: 66.5039, lon: 25.7294 };
+const ROV = {lat:66.5039, lon:25.7294};
 const RADIUS = 250;
+const DRIVE_SPEED = 80; // km/h average
+const MODEL_COLORS = {iconeu:'#38bdf8', ecmwf:'#a78bfa', gfs:'#4ade80'};
 
-function updateTime(){
+let allGridPts = [];
+let allGridClouds = {}; // {iconeu:[], ecmwf:[], gfs:[]}
+let currentWindow = 1;
+let bestSpots = [];
+
+// Clock
+function tick(){
   const n = new Date();
-  document.getElementById('time-now').textContent =
-    n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+  document.getElementById('clock').textContent =
+    n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
 }
-updateTime(); setInterval(updateTime, 30000);
+tick(); setInterval(tick, 30000);
 
+// Tab navigation
 function go(id, el){
-  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-  document.getElementById('t-' + id).classList.add('on');
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('t-'+id).classList.add('on');
   el.classList.add('on');
+  if(id==='map' && allGridPts.length) drawMap();
 }
 
 // Color helpers
-function cloudColor(v){ return v<=20?'#22c55e':v<=50?'#facc15':v<=80?'#f97316':'#ef4444'; }
-function cloudBg(v){ return v<=20?'rgba(34,197,94,0.15)':v<=50?'rgba(250,204,21,0.15)':v<=80?'rgba(249,115,22,0.15)':'rgba(239,68,68,0.15)'; }
-function kpColor(k){ return k>=5?'#f87171':k>=3?'#fbbf24':'#4ade80'; }
-function bzColor(v){ return v<-5?'#4ade80':v<0?'#a3e635':'#f87171'; }
+function cc(v){ return v<=20?'#22c55e':v<=50?'#facc15':v<=80?'#f97316':'#ef4444'; }
+function cbg(v){ return v<=20?'rgba(34,197,94,0.15)':v<=50?'rgba(250,204,21,0.15)':v<=80?'rgba(249,115,22,0.15)':'rgba(239,68,68,0.15)'; }
+function clabel(v){ return v<=20?'Clear':v<=50?'Partly':v<=80?'Mostly cloudy':'Overcast'; }
 
-// Generate 250km grid points (~25km spacing)
-function generateGrid(){
-  const pts = [];
-  const stepLat = 0.225, stepLon = 0.568;
-  for(let lat = ROV.lat - 2.3; lat <= ROV.lat + 2.3; lat += stepLat){
-    for(let lon = ROV.lon - 5.7; lon <= ROV.lon + 5.7; lon += stepLon){
-      const dlat = (lat - ROV.lat) * 111;
-      const dlon = (lon - ROV.lon) * 44;
-      const dist = Math.sqrt(dlat*dlat + dlon*dlon);
-      if(dist <= RADIUS){
-        const bearing = Math.atan2(dlon, dlat) * 180 / Math.PI;
-        const dirs = ['N','NE','E','SE','S','SW','W','NW'];
-        const dir = dirs[Math.round(((bearing + 360) % 360) / 45) % 8];
-        pts.push({ lat: Math.round(lat*1000)/1000, lon: Math.round(lon*1000)/1000, dist: Math.round(dist), dir });
+// Grid generation
+function makeGrid(){
+  const pts=[];
+  for(let lat=ROV.lat-2.3; lat<=ROV.lat+2.3; lat+=0.225){
+    for(let lon=ROV.lon-5.7; lon<=ROV.lon+5.7; lon+=0.568){
+      const dlat=(lat-ROV.lat)*111, dlon=(lon-ROV.lon)*44;
+      const dist=Math.sqrt(dlat*dlat+dlon*dlon);
+      if(dist<=RADIUS){
+        const bearing=Math.atan2(dlon,dlat)*180/Math.PI;
+        const dirs=['N','NE','E','SE','S','SW','W','NW'];
+        const dir=dirs[Math.round(((bearing+360)%360)/45)%8];
+        pts.push({lat:Math.round(lat*1000)/1000, lon:Math.round(lon*1000)/1000, dist:Math.round(dist), dir});
       }
     }
   }
   return pts;
 }
 
-// Get tonight's hours (21:00 – 03:00 local)
-function getTonightHours(){
-  const hours = [];
-  const now = new Date();
-  const tonight = new Date(now);
-  tonight.setHours(21,0,0,0);
-  if(now.getHours() >= 3 && now.getHours() < 21) {
-    // evening hasn't started
-  } else if(now.getHours() < 3) {
-    tonight.setDate(tonight.getDate() - 1);
-  }
-  for(let h = 0; h < 7; h++){
-    const t = new Date(tonight.getTime() + h * 3600000);
-    hours.push(t.toISOString().slice(0,13) + ':00');
+// Region name
+function regionName(lat, lon, dist, dir){
+  if(dist<25) return 'Rovaniemi';
+  if(lat>69&&lon>26) return 'Utsjoki area';
+  if(lat>69) return 'Northernmost Lapland';
+  if(lat>68.5&&lon>28) return 'Saariselkä area';
+  if(lat>68.5&&lon>25) return 'Sodankylä N';
+  if(lat>68.5) return 'Muonio area';
+  if(lat>67.8&&lon>28) return 'Kemijärvi area';
+  if(lat>67.8&&lon>25) return 'Sodankylä';
+  if(lat>67.8) return 'Kolari area';
+  if(lat>67.2&&lon>28) return 'Salla area';
+  if(lat>67.2&&lon>25) return 'Ranua area';
+  if(lat>67.2) return 'Ylläs–Levi area';
+  if(lon<23.5) return 'Swedish Lapland border';
+  if(lon>29) return 'Russian border area';
+  if(lat<65.5) return 'Oulu region';
+  return `${dir} Lapland`;
+}
+
+// Get target hours based on window offset
+function getTargetHours(windowH){
+  const hours=[];
+  const now=new Date();
+  for(let h=0; h<=windowH; h++){
+    const t=new Date(now.getTime()+h*3600000);
+    t.setMinutes(0,0,0);
+    hours.push(t.toISOString().slice(0,13)+':00');
   }
   return hours;
 }
 
-// Fetch Open-Meteo for grid — batched
-async function fetchGridCloud(pts, model='icon_seamless'){
-  const lats = pts.map(p => p.lat).join(',');
-  const lons = pts.map(p => p.lon).join(',');
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=${model}`;
-  const r = await fetch(url);
+// Get tonight hours (21-03)
+function getTonightHours(){
+  const hours=[], now=new Date();
+  const base=new Date(now);
+  base.setHours(21,0,0,0);
+  if(now.getHours()<3) base.setDate(base.getDate()-1);
+  for(let h=0;h<7;h++){
+    const t=new Date(base.getTime()+h*3600000);
+    hours.push(t.toISOString().slice(0,13)+':00');
+  }
+  return hours;
+}
+
+// Fetch cloud for grid points — one model at a time
+async function fetchModel(pts, model){
+  const lats=pts.map(p=>p.lat).join(',');
+  const lons=pts.map(p=>p.lon).join(',');
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=${model}`;
+  const r=await fetch(url);
   return await r.json();
 }
 
-// Fetch single point for hourly detail
-async function fetchPointHourly(lat, lon){
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu,ecmwf_ifs04,gfs_seamless`;
-  const r = await fetch(url);
-  return await r.json();
+// Extract cloud value at specific hour from hourly data
+function getHourCloud(hourly, hour){
+  if(!hourly||!hourly.time) return null;
+  const idx=hourly.time.indexOf(hour);
+  return idx>=0 ? hourly.cloudcover[idx] : null;
 }
 
-// Yr.no API
-async function fetchYr(lat, lon){
-  try{
-    const r = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`, {
-      headers: { 'User-Agent': 'ClearSkyFinder/1.0 nordiestour.com' }
-    });
-    const d = await r.json();
-    return d.properties.timeseries;
-  }catch(e){ return null; }
-}
-
-// NOAA solar wind
-async function fetchSolar(){
-  try{
-    const [mag, plasma, kp] = await Promise.all([
-      fetch('https://services.swpc.noaa.gov/products/solar-wind/mag-7-day.json').then(r=>r.json()),
-      fetch('https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json').then(r=>r.json()),
-      fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json').then(r=>r.json()),
-    ]);
-    const m = mag[mag.length-1], p = plasma[plasma.length-1];
-    return {
-      bz: parseFloat(m[3]), bt: parseFloat(m[6]),
-      density: parseFloat(p[1]), speed: parseFloat(p[2]),
-      kp: parseFloat(kp[kp.length-1][1])
-    };
-  }catch(e){ return null; }
-}
-
-// Get average cloud for tonight's hours from hourly data
-function tonightAvg(hourlyData, tonightHours){
-  const times = hourlyData.time || [];
-  const clouds = hourlyData.cloudcover || [];
-  let sum = 0, count = 0;
-  tonightHours.forEach(h => {
-    const idx = times.indexOf(h);
-    if(idx >= 0){ sum += clouds[idx]; count++; }
+// Average cloud across hours
+function avgHours(hourly, hours){
+  if(!hourly||!hourly.time) return null;
+  let sum=0,cnt=0;
+  hours.forEach(h=>{
+    const idx=hourly.time.indexOf(h);
+    if(idx>=0){sum+=hourly.cloudcover[idx];cnt++;}
   });
-  return count > 0 ? Math.round(sum / count) : null;
+  return cnt>0 ? Math.round(sum/cnt) : null;
 }
 
-// Direction label
-function dirLabel(dir, dist){
-  return `${dist} km ${dir}`;
-}
+// Main scan
+async function runScan(windowH){
+  allGridPts = makeGrid();
+  const targetHours = getTargetHours(windowH);
+  const models = ['icon_eu','ecmwf_ifs04','gfs_seamless'];
+  const modelKeys = ['iconeu','ecmwf','gfs'];
 
-// Draw cloud map on canvas
-function drawMap(canvas, pts, clouds){
-  const ctx = canvas.getContext('2d');
-  const W = canvas.offsetWidth;
-  canvas.width = W;
-  canvas.height = 300;
-  ctx.fillStyle = '#0a0c1a';
-  ctx.fillRect(0,0,W,300);
+  // Fetch all 3 models in parallel
+  const results = await Promise.allSettled(
+    models.map(m => fetchModel(allGridPts, m))
+  );
 
-  // Scale: 250km radius fits in canvas
-  const scaleX = (W/2) / 250 / (1/44);
-  const scaleY = (300/2) / 250 / (1/111);
-  const cx = W/2, cy = 150;
-
-  // Draw range rings
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-  ctx.lineWidth = 0.5;
-  [50,100,150,200,250].forEach(r => {
-    ctx.beginPath();
-    ctx.arc(cx, cy, r * (W/2) / 250, 0, Math.PI*2);
-    ctx.stroke();
-  });
-
-  // Range labels
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'center';
-  [100,200].forEach(r => {
-    ctx.fillText(r+'km', cx + r*(W/2)/250 + 4, cy - 3);
-  });
-
-  // Draw points
-  pts.forEach((pt, i) => {
-    const cloud = clouds[i];
-    if(cloud === null) return;
-    const dlat = (pt.lat - ROV.lat) * 111;
-    const dlon = (pt.lon - ROV.lon) * 44;
-    const x = cx + dlon * (W/2) / 250;
-    const y = cy - dlat * 150 / 250;
-    const col = cloudColor(cloud);
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI*2);
-    ctx.fillStyle = col + 'cc';
-    ctx.fill();
-  });
-
-  // Rovaniemi marker
-  ctx.beginPath();
-  ctx.arc(cx, cy, 7, 0, Math.PI*2);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(cx, cy, 5, 0, Math.PI*2);
-  ctx.fillStyle = '#38bdf8';
-  ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.font = 'bold 9px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('ROV', cx + 9, cy + 3);
-}
-
-// Place name lookup (approximate regions)
-function regionName(lat, lon, dist, dir){
-  if(dist < 30) return 'Rovaniemi area';
-  if(lat > 68.5) return 'Northern Lapland';
-  if(lat > 67.5 && lon > 28) return 'Sodankylä area';
-  if(lat > 67.5 && lon < 24) return 'Muonio area';
-  if(lat > 67.5) return 'Central Lapland';
-  if(lon > 28) return 'Eastern Lapland';
-  if(lon < 23) return 'Swedish Lapland border';
-  if(lat < 65.5) return 'Southern Lapland';
-  return `${dir} of Rovaniemi`;
-}
-
-let gridPts = [];
-let gridClouds = [];
-let bestPt = null;
-
-async function loadClearSky(){
-  gridPts = generateGrid();
-  const tonightHours = getTonightHours();
-
-  // Batch fetch — Open-Meteo supports multiple lats/lons
-  const BATCH = 300;
-  const allClouds = [];
-
-  for(let i = 0; i < gridPts.length; i += BATCH){
-    const batch = gridPts.slice(i, i+BATCH);
-    try{
-      const data = await fetchGridCloud(batch, 'icon_eu');
-      const arr = Array.isArray(data) ? data : [data];
-      arr.forEach(d => {
-        const avg = tonightAvg(d.hourly, tonightHours);
-        allClouds.push(avg);
-      });
-    }catch(e){
-      batch.forEach(() => allClouds.push(null));
+  // Parse results
+  modelKeys.forEach((key, mi) => {
+    if(results[mi].status==='fulfilled'){
+      const data=results[mi].value;
+      const arr=Array.isArray(data)?data:[data];
+      allGridClouds[key] = arr.map(d => avgHours(d.hourly, targetHours));
+    } else {
+      allGridClouds[key] = allGridPts.map(()=>null);
     }
-  }
+  });
 
-  gridClouds = allClouds;
+  // Compute multi-model average per point
+  const avgClouds = allGridPts.map((_,i) => {
+    const vals = modelKeys.map(k=>allGridClouds[k][i]).filter(v=>v!==null);
+    if(!vals.length) return null;
+    return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+  });
 
-  // Draw map
-  const canvas = document.getElementById('skymap');
-  drawMap(canvas, gridPts, gridClouds);
+  // Score: lower cloud = better; also prefer closer spots
+  const scored = allGridPts.map((pt,i) => {
+    const avg = avgClouds[i];
+    if(avg===null) return null;
+    const modelVals = modelKeys.map(k=>allGridClouds[k][i]).filter(v=>v!==null);
+    const spread = modelVals.length>1 ? Math.max(...modelVals)-Math.min(...modelVals) : 30;
+    const confidence = Math.max(0, Math.round(100 - spread));
+    const driveMin = Math.round(pt.dist / DRIVE_SPEED * 60);
+    return {
+      ...pt,
+      cloud: avg,
+      spread,
+      confidence,
+      driveMin,
+      modelVals: {
+        iconeu: allGridClouds.iconeu[i],
+        ecmwf: allGridClouds.ecmwf[i],
+        gfs: allGridClouds.gfs[i],
+      },
+      name: regionName(pt.lat, pt.lon, pt.dist, pt.dir),
+      score: avg + (pt.dist/250)*15 // slight distance penalty
+    };
+  }).filter(Boolean).sort((a,b)=>a.score-b.score);
 
-  // Find top spots
-  const scored = gridPts.map((pt, i) => ({
-    ...pt, cloud: gridClouds[i],
-    name: regionName(pt.lat, pt.lon, pt.dist, pt.dir)
-  })).filter(p => p.cloud !== null).sort((a,b) => a.cloud - b.cloud);
-
-  bestPt = scored[0] || null;
-
-  // Hero card
-  const hero = document.getElementById('hero-card');
-  if(bestPt){
-    const col = cloudColor(bestPt.cloud);
-    hero.innerHTML = `
-      <div class="best-spot-label">Best spot tonight (21:00–03:00)</div>
-      <div class="best-spot-name">${bestPt.name}</div>
-      <div class="best-spot-meta">
-        <span><i class="ti ti-map-pin" style="font-size:12px;vertical-align:-1px" aria-hidden="true"></i> ${dirLabel(bestPt.dir, bestPt.dist)}</span>
-        <span><i class="ti ti-clock" style="font-size:12px;vertical-align:-1px" aria-hidden="true"></i> ~${Math.round(bestPt.dist/80*60)} min drive</span>
-      </div>
-      <div class="best-spot-cloud" style="color:${col}">${bestPt.cloud}%</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.4)">avg cloud cover tonight</div>
-      <div class="confidence-bar">
-        <div class="confidence-fill" style="width:${100-bestPt.cloud}%;background:${col}"></div>
-      </div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:5px">Clear sky probability: ${100-bestPt.cloud}%</div>
-    `;
-  } else {
-    hero.innerHTML = `<div class="loading">No data available</div>`;
-  }
-
-  // Spot list — top 8 unique regions
-  const seen = new Set();
-  const topSpots = scored.filter(s => {
+  // Deduplicate by region name
+  const seen=new Set();
+  bestSpots = scored.filter(s=>{
     if(seen.has(s.name)) return false;
     seen.add(s.name); return true;
-  }).slice(0,8);
+  });
 
-  const spotEl = document.getElementById('spot-list');
-  spotEl.innerHTML = topSpots.map((s,i) => {
-    const col = cloudColor(s.cloud);
-    return `<div class="spot-row">
-      <div class="spot-rank">${i+1}</div>
-      <div>
-        <div class="spot-name">${s.name}</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.35)">${dirLabel(s.dir, s.dist)}</div>
-      </div>
-      <span class="spot-cloud-pill" style="background:${cloudBg(s.cloud)};color:${col}">${s.cloud}%</span>
-    </div>`;
-  }).join('');
+  // Rovaniemi current cloud
+  const rovIdx = allGridPts.findIndex(p=>p.dist<30);
+  const rovCloud = rovIdx>=0 ? avgClouds[rovIdx] : avgClouds[Math.floor(allGridPts.length/2)];
 
-  const now = new Date();
-  document.getElementById('scan-time').textContent =
-    now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ' updated';
+  renderHero(bestSpots[0], windowH);
+  renderRovaniemi(rovCloud);
+  renderSpotList(bestSpots.slice(0,8));
+  renderMapSpots(bestSpots.slice(0,5));
+  if(document.getElementById('t-map').classList.contains('on')) drawMap();
 
-  // Load hourly best spot
-  if(bestPt) loadHourlyBest(bestPt, tonightHours);
+  const now=new Date();
+  document.getElementById('scan-info').textContent =
+    `${allGridPts.length} pts · ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+  document.getElementById('footer-info').textContent =
+    `ICON-EU + ECMWF + GFS · ${windowH}h window · drive speed ~80 km/h`;
+
+  // Load hourly strip separately
+  loadHourlyStrip();
+  loadModels();
 }
 
-async function loadHourlyRov(tonightHours){
+function renderHero(spot, windowH){
+  if(!spot){
+    document.getElementById('hero').innerHTML='<div class="loading">No data available</div>';
+    return;
+  }
+  const col=cc(spot.cloud);
+  const arrive=new Date(Date.now()+spot.driveMin*60000);
+  const arriveStr=arrive.getHours().toString().padStart(2,'0')+':'+arrive.getMinutes().toString().padStart(2,'0');
+  const modelDots = Object.entries(spot.modelVals).map(([k,v])=>{
+    if(v===null) return '';
+    const c=cc(v);
+    return `<span class="model-dot" style="background:${cbg(v)};color:${c}">${k.toUpperCase()} ${v}%</span>`;
+  }).join('');
+
+  document.getElementById('hero').innerHTML=`
+    <div class="hero-badge"><div class="hero-badge-dot"></div>Best clear spot — next ${windowH}h</div>
+    <div class="hero-destination">${spot.name}</div>
+    <div class="hero-sub">
+      <span><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px"></i> ${spot.dist} km ${spot.dir}</span>
+      <span><i class="ti ti-car" style="font-size:11px;vertical-align:-1px"></i> ~${spot.driveMin} min drive</span>
+      <span><i class="ti ti-clock" style="font-size:11px;vertical-align:-1px"></i> Arrive ~${arriveStr}</span>
+    </div>
+    <div class="hero-cloud" style="color:${col}">${spot.cloud}%</div>
+    <div class="hero-cloud-label">average cloud cover · ${clabel(spot.cloud)}</div>
+    <div class="hero-divider"></div>
+    <div class="hero-meta-grid">
+      <div class="hero-meta-item">
+        <div class="hero-meta-val" style="color:${spot.confidence>=70?'#4ade80':spot.confidence>=40?'#fbbf24':'#f87171'}">${spot.confidence}%</div>
+        <div class="hero-meta-lbl">Model agree</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="hero-meta-val">±${Math.round(spot.spread/2)}%</div>
+        <div class="hero-meta-lbl">Spread</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="hero-meta-val" style="color:${col}">${100-spot.cloud}%</div>
+        <div class="hero-meta-lbl">Clear prob.</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:4px;flex-wrap:wrap">${modelDots}</div>
+    <div class="clear-bar"><div class="clear-fill" style="width:${100-spot.cloud}%;background:${col}"></div></div>
+  `;
+}
+
+function renderRovaniemi(cloud){
+  const el=document.getElementById('rov-cloud');
+  const bar=document.getElementById('rov-bar');
+  if(cloud===null){el.textContent='—';return;}
+  const col=cc(cloud);
+  el.textContent=cloud+'%';
+  el.style.color=col;
+  bar.style.width=cloud+'%';
+  bar.style.background=col;
+}
+
+function renderSpotList(spots){
+  const el=document.getElementById('spot-list');
+  el.innerHTML=spots.map((s,i)=>{
+    const col=cc(s.cloud);
+    const modelDots=Object.entries(s.modelVals).map(([k,v])=>{
+      if(v===null) return '';
+      return `<span class="model-dot" style="background:${cbg(v)};color:${cc(v)}">${k.toUpperCase()} ${v}%</span>`;
+    }).join('');
+    return `<div class="spot-item">
+      <div class="spot-num">${i+1}</div>
+      <div class="spot-body">
+        <div class="spot-name">${s.name}</div>
+        <div class="spot-detail">
+          <span>${s.dist} km ${s.dir}</span>
+          <span>~${s.driveMin} min</span>
+          <span style="color:${s.confidence>=70?'#4ade80':s.confidence>=40?'#fbbf24':'#f87171'}">${s.confidence}% agree</span>
+        </div>
+        <div class="spot-models">${modelDots}</div>
+      </div>
+      <div>
+        <div class="spot-cloud" style="color:${col}">${s.cloud}%</div>
+        <div class="spot-conf" style="color:${col};text-align:right">${clabel(s.cloud)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMapSpots(spots){
+  const el=document.getElementById('map-spot-list');
+  if(!spots.length){el.innerHTML='<div class="loading">No data</div>';return;}
+  el.innerHTML=spots.map((s,i)=>`
+    <div class="row">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:11px;color:rgba(255,255,255,0.25);width:16px">${i+1}</div>
+        <div>
+          <div style="font-size:12px;color:#fff">${s.name}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4)">${s.dist} km ${s.dir} · ~${s.driveMin} min</div>
+        </div>
+      </div>
+      <div style="font-size:14px;font-weight:500;color:${cc(s.cloud)}">${s.cloud}%</div>
+    </div>`).join('');
+}
+
+// Canvas map
+function drawMap(){
+  const canvas=document.getElementById('skymap');
+  const W=canvas.offsetWidth||360;
+  canvas.width=W; canvas.height=300;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0a0c1a'; ctx.fillRect(0,0,W,300);
+  const cx=W/2, cy=150;
+
+  // Grid lines
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=0.5;
+  [50,100,150,200,250].forEach(r=>{
+    ctx.beginPath(); ctx.arc(cx,cy,r*(W/2)/250,0,Math.PI*2); ctx.stroke();
+  });
+  ctx.fillStyle='rgba(255,255,255,0.18)'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+  [100,200].forEach(r=>ctx.fillText(r+'km',cx+r*(W/2)/250+4,cy-3));
+
+  // Compute avg cloud per point
+  const modelKeys=['iconeu','ecmwf','gfs'];
+  allGridPts.forEach((pt,i)=>{
+    const vals=modelKeys.map(k=>allGridClouds[k]?.[i]).filter(v=>v!=null);
+    if(!vals.length) return;
+    const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const dlat=(pt.lat-ROV.lat)*111, dlon=(pt.lon-ROV.lon)*44;
+    const x=cx+dlon*(W/2)/250, y=cy-dlat*150/250;
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fillStyle=cc(avg)+'bb'; ctx.fill();
+  });
+
+  // Best spots numbered
+  bestSpots.slice(0,5).forEach((s,i)=>{
+    const dlat=(s.lat-ROV.lat)*111, dlon=(s.lon-ROV.lon)*44;
+    const x=cx+dlon*(W/2)/250, y=cy-dlat*150/250;
+    ctx.beginPath(); ctx.arc(x,y,9,0,Math.PI*2);
+    ctx.fillStyle='rgba(56,189,248,0.9)'; ctx.fill();
+    ctx.fillStyle='#000'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(i+1,x,y+3);
+  });
+
+  // Rovaniemi
+  ctx.beginPath(); ctx.arc(cx,cy,8,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2);
+  ctx.fillStyle='#38bdf8'; ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='bold 9px sans-serif';
+  ctx.textAlign='left'; ctx.fillText('ROV',cx+10,cy+3);
+}
+
+// Hourly strip for tonight
+async function loadHourlyStrip(){
   try{
-    const data = await fetchPointHourly(ROV.lat, ROV.lon);
-    const models = ['icon_eu','ecmwf_ifs04','gfs_seamless'];
-    const labels = ['ICON-EU','ECMWF','GFS'];
+    const hours=getTonightHours();
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu,ecmwf_ifs04,gfs_seamless`;
+    const r=await fetch(url); const data=await r.json();
+    const arr=Array.isArray(data)?data:[data];
+    const el=document.getElementById('hour-strip');
 
-    // Rovaniemi hourly grid
-    const rovEl = document.getElementById('hourly-rovaniemi');
-    const iconEuCloud = data.hourly?.cloudcover || [];
-    const times = data.hourly?.time || [];
-    const cells = tonightHours.map(h => {
-      const idx = times.indexOf(h);
-      const val = idx >= 0 ? iconEuCloud[idx] : null;
-      const hr = h.slice(11,13);
-      const col = val !== null ? cloudColor(val) : '#888';
-      return `<div class="hour-cell">
-        <div class="hour-time">${hr}:00</div>
-        <div class="hour-cloud" style="color:${col}">${val !== null ? val+'%' : '—'}</div>
-        <div class="hour-model">ICON-EU</div>
-      </div>`;
+    // Get min cloud hour
+    const avgs=hours.map(h=>{
+      const vals=arr.map(d=>{
+        const idx=d.hourly?.time?.indexOf(h);
+        return idx>=0?d.hourly.cloudcover[idx]:null;
+      }).filter(v=>v!==null);
+      return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):null;
     });
-    rovEl.innerHTML = cells.join('');
+    const minAvg=Math.min(...avgs.filter(v=>v!==null));
 
-    // Model comparison
-    const modelEl = document.getElementById('model-compare');
-    // Multi-model data from single request
-    const multiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu,ecmwf_ifs04,gfs_seamless`;
-    const mr = await fetch(multiUrl);
-    const md = await mr.json();
-
-    // Open-Meteo returns separate objects per model when multiple requested
-    const modelResults = Array.isArray(md) ? md : [md];
-    const modelLabels = ['ICON-EU','ECMWF IFS','GFS'];
-    const modelColors = ['#38bdf8','#a78bfa','#4ade80'];
-
-    const modelRows = modelResults.map((m, i) => {
-      const avg = tonightAvg(m.hourly, tonightHours);
-      if(avg === null) return '';
-      const col = cloudColor(avg);
-      return `<div class="model-row">
-        <div class="model-name" style="color:${modelColors[i]}">${modelLabels[i]}</div>
-        <div class="model-bar-wrap"><div class="model-bar" style="width:${avg}%;background:${col}"></div></div>
-        <div class="model-val" style="color:${col}">${avg}%</div>
-        <div class="model-badge" style="background:${cloudBg(avg)};color:${col}">${avg<=30?'Clear':avg<=60?'Partial':'Cloudy'}</div>
+    el.innerHTML=hours.map((h,i)=>{
+      const v=avgs[i]; if(v===null) return '';
+      const hr=h.slice(11,13);
+      const isBest=v===minAvg;
+      const col=cc(v);
+      return `<div class="hour-chip${isBest?' best':''}">
+        <div class="hour-chip-time">${hr}:00${isBest?'★':''}</div>
+        <div class="hour-chip-cloud" style="color:${col}">${v}%</div>
+        <div class="hour-chip-label">${clabel(v)}</div>
       </div>`;
     }).join('');
-    modelEl.innerHTML = modelRows || '<div class="loading">No data</div>';
-
-    // Agreement score
-    const vals = modelResults.map(m => tonightAvg(m.hourly, tonightHours)).filter(v => v !== null);
-    if(vals.length > 1){
-      const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
-      const spread = Math.max(...vals) - Math.min(...vals);
-      const agreeEl = document.getElementById('model-agreement');
-      const agreeColor = spread < 15 ? '#4ade80' : spread < 30 ? '#fbbf24' : '#f87171';
-      agreeEl.innerHTML = `
-        <div class="row">
-          <div style="font-size:12px;color:rgba(255,255,255,0.6)">Avg cloud cover tonight</div>
-          <div style="font-size:14px;font-weight:500;color:${cloudColor(mean)}">${Math.round(mean)}%</div>
-        </div>
-        <div class="row">
-          <div style="font-size:12px;color:rgba(255,255,255,0.6)">Model spread</div>
-          <div style="font-size:13px;font-weight:500;color:${agreeColor}">±${Math.round(spread/2)}%</div>
-        </div>
-        <div class="row">
-          <div style="font-size:12px;color:rgba(255,255,255,0.6)">Confidence</div>
-          <div style="font-size:13px;font-weight:500;color:${agreeColor}">${spread<15?'High':spread<30?'Medium':'Low'}</div>
-        </div>
-      `;
-    }
   }catch(e){
-    document.getElementById('hourly-rovaniemi').innerHTML = '<div class="loading">Error loading</div>';
+    document.getElementById('hour-strip').innerHTML='<div class="loading">Error</div>';
   }
 }
 
-async function loadHourlyBest(pt, tonightHours){
+// Models tab
+async function loadModels(){
   try{
-    const data = await fetchPointHourly(pt.lat, pt.lon);
-    const times = data.hourly?.time || [];
-    const clouds = data.hourly?.cloudcover || [];
-    const bestEl = document.getElementById('hourly-best');
-    const cells = tonightHours.map(h => {
-      const idx = times.indexOf(h);
-      const val = idx >= 0 ? clouds[idx] : null;
-      const hr = h.slice(11,13);
-      const col = val !== null ? cloudColor(val) : '#888';
-      return `<div class="hour-cell">
-        <div class="hour-time">${hr}:00</div>
-        <div class="hour-cloud" style="color:${col}">${val !== null ? val+'%' : '—'}</div>
-        <div class="hour-model" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pt.name.split(' ')[0]}</div>
-      </div>`;
-    });
-    bestEl.innerHTML = cells.join('');
+    const hours=getTargetHours(currentWindow);
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu,ecmwf_ifs04,gfs_seamless`;
+    const r=await fetch(url); const data=await r.json();
+    const arr=Array.isArray(data)?data:[data];
+    const labels=['ICON-EU','ECMWF','GFS'];
+    const colors=['#38bdf8','#a78bfa','#4ade80'];
+
+    const vals=arr.map((d,i)=>{
+      const avg=avgHours(d.hourly, hours);
+      return {label:labels[i], color:colors[i], val:avg};
+    }).filter(d=>d.val!==null);
+
+    document.getElementById('model-compare').innerHTML=vals.map(d=>`
+      <div class="model-row">
+        <div class="model-name" style="color:${d.color}">${d.label}</div>
+        <div class="model-bar-wrap"><div class="model-bar" style="width:${d.val}%;background:${cc(d.val)}"></div></div>
+        <div class="model-val" style="color:${cc(d.val)}">${d.val}%</div>
+        <div class="model-badge" style="background:${cbg(d.val)};color:${cc(d.val)}">${clabel(d.val)}</div>
+      </div>`).join('');
+
+    if(vals.length>1){
+      const spread=Math.max(...vals.map(v=>v.val))-Math.min(...vals.map(v=>v.val));
+      const mean=Math.round(vals.reduce((a,b)=>a+{val:b.val},{val:0}).val/vals.length);
+      const agC=spread<15?'#4ade80':spread<30?'#fbbf24':'#f87171';
+      document.getElementById('model-agreement').innerHTML=`
+        <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Average cloud now</div><div style="font-size:14px;font-weight:500;color:${cc(mean)}">${mean}%</div></div>
+        <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Model spread</div><div style="font-size:13px;font-weight:500;color:${agC}">±${Math.round(spread/2)}%</div></div>
+        <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Forecast confidence</div><div style="font-size:13px;font-weight:500;color:${agC}">${spread<15?'High':spread<30?'Medium':'Low'}</div></div>`;
+    }
   }catch(e){}
 }
 
-async function loadYr(){
-  const data = await fetchYr(ROV.lat, ROV.lon);
-  const yrEl = document.getElementById('yr-hourly');
-  if(!data){ yrEl.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,0.4);padding:4px 0">Yr data unavailable (CORS)</div>'; return; }
-  const tonight = getTonightHours();
-  const rows = data.filter(ts => tonight.includes(ts.time.slice(0,16)+':00'))
-    .slice(0,6).map(ts => {
-      const cloud = ts.data.instant.details.cloud_area_fraction;
-      const hr = ts.time.slice(11,13);
-      const col = cloudColor(cloud);
-      return `<div class="row">
-        <div style="font-size:12px;color:rgba(255,255,255,0.6)">${hr}:00</div>
-        <div style="font-size:13px;font-weight:500;color:${col}">${Math.round(cloud)}%</div>
-      </div>`;
-    }).join('');
-  yrEl.innerHTML = rows || '<div class="loading">No evening data</div>';
+// Time window selector
+function setWindow(h, el){
+  currentWindow=h;
+  document.querySelectorAll('.time-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('hero').innerHTML=
+    '<div class="hero-badge"><div class="hero-badge-dot"></div>Rescanning...</div><div class="loading" style="padding:16px 0">Fetching '+h+'h window data...</div>';
+  runScan(h);
 }
 
-async function loadAurora(){
-  const s = await fetchSolar();
-  if(!s) return;
-  const kpC = kpColor(s.kp), bzC = bzColor(s.bz);
-  document.getElementById('a-kp').textContent = s.kp.toFixed(1);
-  document.getElementById('a-kp').style.color = kpC;
-  document.getElementById('a-kp-label').textContent = s.kp>=5?'Strong activity':s.kp>=3?'Moderate':'Weak activity';
-  document.getElementById('a-kp-label').style.color = kpC;
-  document.getElementById('a-bz').textContent = (s.bz>=0?'+':'')+s.bz.toFixed(1)+' nT';
-  document.getElementById('a-bz').style.color = bzC;
-  document.getElementById('a-bz-label').textContent = s.bz<-5?'South — aurora active':s.bz<0?'Weak connection':'North — shielded';
-  document.getElementById('a-bz-label').style.color = bzC;
-  document.getElementById('a-speed').textContent = Math.round(s.speed);
-  document.getElementById('a-density').textContent = s.density.toFixed(1);
-  document.getElementById('a-bt').textContent = s.bt.toFixed(1);
-}
-
-// Windy model switcher
-let currentModel = 'iconEu';
-function setWindyModel(model){
-  currentModel = model;
-  const src = `https://embed.windy.com/embed2.html?lat=66.5&lon=25.73&detailLat=66.5&detailLon=25.73&width=400&height=320&zoom=5&level=surface&overlay=clouds&product=${model}&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
-  document.getElementById('windy-iframe').src = src;
-  document.getElementById('badge-iconeu').style.color = model==='iconEu'?'#38bdf8':'rgba(255,255,255,0.3)';
-  document.getElementById('badge-iconeu').textContent = model==='iconEu'?'Active':'—';
-  document.getElementById('badge-ecmwf').style.color = model==='ecmwf'?'#38bdf8':'rgba(255,255,255,0.3)';
-  document.getElementById('badge-ecmwf').textContent = model==='ecmwf'?'Active':'—';
-}
-
-// Combined score
-async function renderCombinedScore(){
-  const el = document.getElementById('combined-score');
-  // Will update after both cloud and aurora data loaded
-  setTimeout(() => {
-    const rov = gridClouds.length > 0 ? gridClouds[Math.floor(gridPts.length/2)] : null;
-    const best = bestPt ? bestPt.cloud : null;
-    el.innerHTML = `
-      <div class="row">
-        <div style="font-size:12px;color:rgba(255,255,255,0.6)">Cloud cover (Rovaniemi)</div>
-        <div style="font-size:13px;font-weight:500;color:${rov!==null?cloudColor(rov):'#888'}">${rov!==null?rov+'%':'—'}</div>
-      </div>
-      <div class="row">
-        <div style="font-size:12px;color:rgba(255,255,255,0.6)">Best nearby spot</div>
-        <div style="font-size:13px;font-weight:500;color:${best!==null?cloudColor(best):'#888'}">${best!==null?best+'%':'—'}</div>
-      </div>
-    `;
-  }, 8000);
-}
-
-// Satellite tab
+// Satellite
 function setSat(id){
-  document.querySelectorAll('.sat-panel').forEach(p => p.style.display='none');
+  document.querySelectorAll('.sat-panel').forEach(p=>p.style.display='none');
   document.getElementById('sat-'+id).style.display='block';
-  document.querySelectorAll('#sat-btns button').forEach(b => {
-    b.style.border='0.5px solid #1a1a30';
-    b.style.background='transparent';
-    b.style.color='rgba(255,255,255,0.45)';
-  });
-  const btn = document.getElementById('sb-'+id);
-  btn.style.border='0.5px solid #38bdf8';
-  btn.style.background='rgba(56,189,248,0.15)';
-  btn.style.color='#38bdf8';
-  if(id==='nasa') loadNASAImage();
-  const now = new Date();
-  document.getElementById('sat-updated').textContent =
-    now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+' refreshed';
+  document.querySelectorAll('.sat-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('sb-'+id).classList.add('on');
+  if(id==='nasa') loadNASAImg();
 }
-
 function getNASADate(){
-  const d = new Date();
-  d.setDate(d.getDate()-1);
+  const d=new Date(); d.setDate(d.getDate()-1);
   return d.toISOString().slice(0,10);
 }
-
-function loadNASAImage(){
-  const date = getNASADate();
-  // NASA GIBS WMS — MODIS Terra true colour tile over Lapland
-  const url = `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=60,15,72,40&CRS=EPSG:4326&WIDTH=512&HEIGHT=300&LAYERS=MODIS_Terra_CorrectedReflectance_TrueColor&STYLES=&FORMAT=image/jpeg&TIME=${date}`;
-  const img = document.getElementById('nasa-img');
-  if(img) img.src = url;
+function loadNASAImg(){
+  const date=getNASADate();
+  const url=`https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=60,15,72,40&CRS=EPSG:4326&WIDTH=512&HEIGHT=300&LAYERS=MODIS_Terra_CorrectedReflectance_TrueColor&STYLES=&FORMAT=image/jpeg&TIME=${date}`;
+  const img=document.getElementById('nasa-img');
+  if(img) img.src=url;
 }
 
-function openNASA(){
-  const date = getNASADate();
-  window.open(`https://worldview.earthdata.nasa.gov/?v=15,60,40,72&l=MODIS_Terra_CorrectedReflectance_TrueColor,Coastlines_15m&t=${date}`, '_blank');
+// Windy model
+function setWindyModel(model){
+  const src=`https://embed.windy.com/embed2.html?lat=66.5&lon=25.73&zoom=5&level=surface&overlay=clouds&product=${model}&type=map&metricWind=km%2Fh&metricTemp=%C2%B0C`;
+  document.getElementById('windy-iframe').src=src;
+  ['iconeu','ecmwf'].forEach(m=>{
+    document.getElementById('wbadge-'+m).textContent=model===m.replace('eu','Eu')||model===m?'Active':'—';
+    document.getElementById('wbadge-'+m).style.color=model===m||model===m.replace('eu','Eu')?'#38bdf8':'rgba(255,255,255,0.3)';
+  });
 }
 
 // PWA
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-// Init all
-const tonightHours = getTonightHours();
-Promise.all([
-  loadClearSky(),
-  loadHourlyRov(tonightHours),
-  loadAurora(),
-]).catch(console.error);
-renderCombinedScore();
-loadYr();
+// Start
+runScan(1);
 </script>
 </body>
 </html>

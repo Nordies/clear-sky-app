@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Debug</title>
+<style>
+body{background:#060810;color:#fff;font-family:monospace;padding:16px;font-size:12px}
+button{background:#38bdf8;color:#000;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin:4px;font-size:12px}
+pre{background:#0d1020;border:0.5px solid #1a1a30;border-radius:8px;padding:12px;margin-top:8px;overflow-x:auto;white-space:pre-wrap;font-size:11px;max-height:300px;overflow-y:auto}
+.ok{color:#4ade80}.err{color:#f87171}.warn{color:#fbbf24}
+h3{color:#38bdf8;margin:12px 0 6px}
+</style>
+</head>
+<body>
+<h2>Open-Meteo API Debugger</h2>
+<p style="color:rgba(255,255,255,0.5);margin-bottom:12px">Press each button and copy the result</p>
+
+<h3>Test 1: Single point (1 location)</h3>
+<button onclick="test1()">Run Test 1</button>
+<pre id="r1">—</pre>
+
+<h3>Test 2: Two points (2 locations)</h3>
+<button onclick="test2()">Run Test 2</button>
+<pre id="r2">—</pre>
+
+<h3>Test 3: Five points (5 locations)</h3>
+<button onclick="test3()">Run Test 3</button>
+<pre id="r3">—</pre>
+
+<h3>Test 4: Check time format matches target hour</h3>
+<button onclick="test4()">Run Test 4</button>
+<pre id="r4">—</pre>
+
+<h3>Test 5: ECMWF model (check model name)</h3>
+<button onclick="test5()">Run Test 5</button>
+<pre id="r5">—</pre>
+
+<script>
+async function showResult(elId, fn) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '⏳ Loading...';
+  try {
+    const result = await fn();
+    el.innerHTML = JSON.stringify(result, null, 2);
+    el.className = 'ok';
+  } catch(e) {
+    el.innerHTML = '❌ ERROR: ' + e.message;
+    el.className = 'err';
+  }
+}
+
+async function test1() {
+  await showResult('r1', async () => {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=66.5039&longitude=25.7294&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=1&models=icon_eu';
+    const r = await fetch(url);
+    const data = await r.json();
+    return {
+      isArray: Array.isArray(data),
+      type: typeof data,
+      keys: Object.keys(data),
+      hasHourly: !!data.hourly,
+      hourlyKeys: data.hourly ? Object.keys(data.hourly) : null,
+      timeSample: data.hourly?.time?.slice(0,5),
+      cloudSample: data.hourly?.cloudcover?.slice(0,5),
+      latitude: data.latitude,
+      longitude: data.longitude
+    };
+  });
+}
+
+async function test2() {
+  await showResult('r2', async () => {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=66.5039,66.7&longitude=25.7294,25.9&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=1&models=icon_eu';
+    const r = await fetch(url);
+    const data = await r.json();
+    if (Array.isArray(data)) {
+      return {
+        isArray: true,
+        length: data.length,
+        item0_lat: data[0]?.latitude,
+        item0_timeSample: data[0]?.hourly?.time?.slice(0,3),
+        item0_cloudSample: data[0]?.hourly?.cloudcover?.slice(0,3),
+        item1_lat: data[1]?.latitude,
+        item1_cloudSample: data[1]?.hourly?.cloudcover?.slice(0,3),
+      };
+    } else {
+      return {isArray: false, keys: Object.keys(data), raw: JSON.stringify(data).slice(0,200)};
+    }
+  });
+}
+
+async function test3() {
+  await showResult('r3', async () => {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=66.5,66.7,66.3,67.0,65.8&longitude=25.7,25.9,25.5,26.0,25.2&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=1&models=icon_eu';
+    const r = await fetch(url);
+    const data = await r.json();
+    if (Array.isArray(data)) {
+      return {
+        isArray: true,
+        length: data.length,
+        lats: data.map(d => d.latitude),
+        cloud0: data[0]?.hourly?.cloudcover?.slice(0,3),
+        cloud4: data[4]?.hourly?.cloudcover?.slice(0,3),
+      };
+    } else {
+      return {isArray: false, keys: Object.keys(data)};
+    }
+  });
+}
+
+async function test4() {
+  await showResult('r4', async () => {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=66.5039&longitude=25.7294&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=1&models=icon_eu';
+    const r = await fetch(url);
+    const data = await r.json();
+    const times = data.hourly?.time || [];
+    // What does the target hour look like?
+    const now = new Date();
+    const target = now.toISOString().slice(0,13) + ':00';
+    const target2 = new Date(now.getTime() + 3600000).toISOString().slice(0,13) + ':00';
+    const idx = times.indexOf(target);
+    const idx2 = times.indexOf(target2);
+    return {
+      target_hour: target,
+      found_at_index: idx,
+      cloud_at_target: idx>=0 ? data.hourly.cloudcover[idx] : 'NOT FOUND',
+      next_hour: target2,
+      next_found_at: idx2,
+      times_sample: times.slice(0,8),
+      format_note: 'Times in response use local Helsinki timezone'
+    };
+  });
+}
+
+async function test5() {
+  await showResult('r5', async () => {
+    // Test ECMWF model name
+    const models = ['ecmwf_ifs04', 'ecmwf_ifs025', 'ecmwf'];
+    const results = {};
+    for (const m of models) {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=66.5039&longitude=25.7294&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=1&models=${m}`;
+        const r = await fetch(url);
+        const data = await r.json();
+        results[m] = data.error ? 'ERROR: '+data.reason : 'OK - cloud[0]: '+data.hourly?.cloudcover?.[0];
+      } catch(e) {
+        results[m] = 'FAILED: '+e.message;
+      }
+    }
+    return results;
+  });
+}
+</script>
+</body>
+</html>

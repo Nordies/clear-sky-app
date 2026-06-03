@@ -31,7 +31,7 @@ html,body{height:100%;background:#060810;font-family:-apple-system,BlinkMacSyste
 .row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #131325}
 .row:last-child{border-bottom:none}
 .loading{font-size:11px;color:rgba(255,255,255,0.4);padding:20px 0;text-align:center}
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(56,189,248,0.3);border-top-color:#38bdf8;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;vertical-align:middle}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(56,189,248,0.3);border-top-color:#38bdf8;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
 .bottom-pad{height:env(safe-area-inset-bottom,20px)}
 a{color:#38bdf8;text-decoration:none}
@@ -87,7 +87,7 @@ a{color:#38bdf8;text-decoration:none}
     </div>
     <div class="loading"><span class="spinner"></span>Fetching weather data...</div>
   </div>
-  <div class="card" id="rov-card">
+  <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
         <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:2px">Rovaniemi — right now</div>
@@ -106,7 +106,7 @@ a{color:#38bdf8;text-decoration:none}
     <div class="sec" style="margin:0">Top clear spots</div>
     <div style="font-size:10px;color:rgba(255,255,255,0.3)" id="scan-info">scanning...</div>
   </div>
-  <div class="card" id="spot-list"><div class="loading"><span class="spinner"></span>Loading spots...</div></div>
+  <div class="card" id="spot-list"><div class="loading"><span class="spinner"></span>Loading...</div></div>
   <div class="sec">Tonight — Rovaniemi hourly</div>
   <div class="hour-strip" id="hour-strip"><div class="loading">Loading...</div></div>
   <div style="font-size:10px;color:rgba(255,255,255,0.2);text-align:center;margin:10px 0 4px" id="footer-info">ICON-EU · ECMWF · GFS</div>
@@ -138,7 +138,7 @@ a{color:#38bdf8;text-decoration:none}
   <div class="sec">Which model to trust</div>
   <div class="card">
     <div class="row"><div><div style="font-size:12px;font-weight:500;color:#38bdf8">ICON-EU</div><div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Best for winter Lapland · 7 km</div></div><div style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(56,189,248,0.12);color:#38bdf8">Winter ✓</div></div>
-    <div class="row"><div><div style="font-size:12px;font-weight:500;color:#a78bfa">ECMWF</div><div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Best for autumn · global · 9 km</div></div><div style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(167,139,250,0.12);color:#a78bfa">Autumn ✓</div></div>
+    <div class="row"><div><div style="font-size:12px;font-weight:500;color:#a78bfa">ECMWF IFS025</div><div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Best for autumn · global · 0.25°</div></div><div style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(167,139,250,0.12);color:#a78bfa">Autumn ✓</div></div>
     <div class="row"><div><div style="font-size:12px;font-weight:500;color:#4ade80">GFS</div><div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">US model · 5–7 day outlook</div></div><div style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(74,222,128,0.12);color:#4ade80">Long range</div></div>
     <div class="row"><div><div style="font-size:12px;font-weight:500;color:#fbbf24">FMI</div><div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Finnish Met · 2.5 km local accuracy</div></div><div style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(251,191,36,0.12);color:#fbbf24">Most local</div></div>
   </div>
@@ -197,12 +197,30 @@ a{color:#38bdf8;text-decoration:none}
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════
+// CONFIRMED FIXES from debug.html results:
+// FIX 1: API time format is "2026-06-04T00:00" (no seconds)
+//         Code was generating "2026-06-04T00:00:00" → always NOT FOUND
+// FIX 2: ECMWF model name is "ecmwf_ifs025" (not "ecmwf_ifs04")
+//         ecmwf_ifs04 returns null data; ecmwf_ifs025 returns valid data
+// FIX 3: Times in API use local Helsinki timezone, not UTC
+//         Must use timezone=Europe/Helsinki and match local time strings
+// ═══════════════════════════════════════════════════════
+
 const ROV = {lat:66.5039, lon:25.7294};
 const DRIVE_KMH = 80;
-let currentWindow = 1;
-let scanResults = []; // [{pt, clouds:{iconeu,ecmwf,gfs}, avg, ...}]
+const RADIUS = 250;
+// CONFIRMED correct model names from debug test
+const MODELS = [
+  {key:'iconeu',  api:'icon_eu',      label:'ICON-EU',  color:'#38bdf8'},
+  {key:'ecmwf',   api:'ecmwf_ifs025', label:'ECMWF',    color:'#a78bfa'},
+  {key:'gfs',     api:'gfs_seamless', label:'GFS',      color:'#4ade80'},
+];
 
-// ── Helpers ──────────────────────────────────────────────
+let currentWindow = 1;
+let scanResults = [];
+
+// ── Clock ────────────────────────────────────────────────
 function tick(){
   const n=new Date();
   document.getElementById('clock').textContent=
@@ -210,6 +228,7 @@ function tick(){
 }
 tick(); setInterval(tick,30000);
 
+// ── Tab navigation ────────────────────────────────────────
 function go(id,el){
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
@@ -218,94 +237,118 @@ function go(id,el){
   if(id==='map'&&scanResults.length) drawMap();
 }
 
+// ── Color helpers ─────────────────────────────────────────
 function cc(v){return v<=20?'#22c55e':v<=50?'#facc15':v<=80?'#f97316':'#ef4444';}
 function cbg(v){return v<=20?'rgba(34,197,94,0.15)':v<=50?'rgba(250,204,21,0.15)':v<=80?'rgba(249,115,22,0.15)':'rgba(239,68,68,0.15)';}
 function cl(v){return v<=20?'Clear':v<=50?'Partly':v<=80?'Mostly cloudy':'Overcast';}
-function safe(v){return(v===null||v===undefined||isNaN(Number(v)))?null:Math.round(Number(v));}
 
-// ── Grid (25 km spacing, 250 km radius = ~313 pts) ──────
+// ── FIX 1: Generate time strings matching API format ──────
+// API returns "2026-06-04T03:00" (Helsinki local time, NO seconds)
+// We request timezone=Europe/Helsinki so API times are local
+function makeTargetHours(windowH){
+  const hours=[];
+  // Get current Helsinki time by using timezone offset
+  // Helsinki is UTC+2 (winter) or UTC+3 (summer/DST)
+  // Simplest: ask API for local tz, match format "YYYY-MM-DDTHH:MM"
+  const now = new Date();
+  for(let h=0; h<=windowH; h++){
+    const t = new Date(now.getTime() + h*3600000);
+    // Format as Helsinki local time "YYYY-MM-DDTHH:MM" (NO seconds, NO Z)
+    // Use toLocaleString to get Helsinki time components
+    const helsinkiStr = t.toLocaleString('sv-SE', {timeZone:'Europe/Helsinki'});
+    // sv-SE locale gives "2026-06-04 03:00:00" format
+    // Convert to "2026-06-04T03:00"
+    const parts = helsinkiStr.split(' ');
+    const datePart = parts[0]; // "2026-06-04"
+    const timePart = parts[1].slice(0,5); // "03:00"
+    hours.push(datePart + 'T' + timePart);
+  }
+  return hours;
+}
+
+function makeTonightHours(){
+  const hours=[];
+  const now = new Date();
+  // Tonight = 21:00 to 03:00 Helsinki time
+  // Find tonight's 21:00 Helsinki
+  const helsinkiNow = new Date(now.toLocaleString('en-US', {timeZone:'Europe/Helsinki'}));
+  const base = new Date(now);
+  // Set to 21:00 Helsinki today
+  const helsinkiToday = new Date(now.toLocaleString('sv-SE', {timeZone:'Europe/Helsinki'}));
+  helsinkiToday.setHours(21,0,0,0);
+  // If current Helsinki hour < 3, use yesterday's 21:00
+  if(helsinkiNow.getHours() < 3) helsinkiToday.setDate(helsinkiToday.getDate()-1);
+
+  for(let h=0;h<7;h++){
+    const t = new Date(helsinkiToday.getTime() + h*3600000);
+    const s = t.toLocaleString('sv-SE',{timeZone:'Europe/Helsinki'});
+    const parts = s.split(' ');
+    hours.push(parts[0]+'T'+parts[1].slice(0,5));
+  }
+  return hours;
+}
+
+// ── Parse cloud average from hourly data ──────────────────
+// Uses indexOf to match exact time strings like "2026-06-04T03:00"
+function avgCloud(hourly, hours){
+  if(!hourly||!Array.isArray(hourly.time)||!Array.isArray(hourly.cloudcover)) return null;
+  let sum=0, cnt=0;
+  for(const h of hours){
+    const idx = hourly.time.indexOf(h);
+    if(idx<0) continue;
+    const v = Number(hourly.cloudcover[idx]);
+    if(!isNaN(v)){ sum+=v; cnt++; }
+  }
+  return cnt>0 ? Math.round(sum/cnt) : null;
+}
+
+// ── Grid generation ───────────────────────────────────────
 function makeGrid(){
   const pts=[];
-  for(let lat=ROV.lat-2.3;lat<=ROV.lat+2.3;lat+=0.225){
-    for(let lon=ROV.lon-5.7;lon<=ROV.lon+5.7;lon+=0.568){
-      const dlat=(lat-ROV.lat)*111,dlon=(lon-ROV.lon)*44;
+  for(let lat=ROV.lat-2.3; lat<=ROV.lat+2.3; lat+=0.225){
+    for(let lon=ROV.lon-5.7; lon<=ROV.lon+5.7; lon+=0.568){
+      const dlat=(lat-ROV.lat)*111, dlon=(lon-ROV.lon)*44;
       const dist=Math.sqrt(dlat*dlat+dlon*dlon);
       if(dist>RADIUS) continue;
       const bearing=Math.atan2(dlon,dlat)*180/Math.PI;
       const dirs=['N','NE','E','SE','S','SW','W','NW'];
       const dir=dirs[Math.round(((bearing+360)%360)/45)%8];
-      pts.push({lat:+lat.toFixed(3),lon:+lon.toFixed(3),dist:Math.round(dist),dir});
+      pts.push({lat:+lat.toFixed(3), lon:+lon.toFixed(3), dist:Math.round(dist), dir});
     }
   }
   return pts;
 }
-const RADIUS=250;
-const GRID=makeGrid();
+const GRID = makeGrid();
 
-// ── Target hours ─────────────────────────────────────────
-function targetHours(windowH){
-  const hrs=[],now=new Date();
-  for(let h=0;h<=windowH;h++){
-    const t=new Date(now.getTime()+h*3600000);
-    t.setMinutes(0,0,0);
-    hrs.push(t.toISOString().slice(0,13)+':00');
-  }
-  return hrs;
-}
-
-function tonightHours(){
-  const hrs=[],now=new Date();
-  const base=new Date(now);
-  base.setHours(21,0,0,0);
-  if(now.getHours()<3) base.setDate(base.getDate()-1);
-  for(let h=0;h<7;h++){
-    const t=new Date(base.getTime()+h*3600000);
-    hrs.push(t.toISOString().slice(0,13)+':00');
-  }
-  return hrs;
-}
-
-// ── Parse hourly cloud average ────────────────────────────
-function avgCloud(hourly, hours){
-  if(!hourly||!Array.isArray(hourly.time)||!Array.isArray(hourly.cloudcover)) return null;
-  let sum=0,cnt=0;
-  for(const h of hours){
-    const i=hourly.time.indexOf(h);
-    if(i<0) continue;
-    const v=safe(hourly.cloudcover[i]);
-    if(v!==null){sum+=v;cnt++;}
-  }
-  return cnt>0?Math.round(sum/cnt):null;
-}
-
-// ── Fetch ONE model for multiple points (batched by 50) ──
-async function fetchOneModel(pts, modelName, hours){
+// ── Fetch one model for all grid points (batched) ─────────
+async function fetchOneModel(pts, modelApi, hours){
   const BATCH=50;
   const out=new Array(pts.length).fill(null);
-  for(let i=0;i<pts.length;i+=BATCH){
+  for(let i=0; i<pts.length; i+=BATCH){
     const slice=pts.slice(i,i+BATCH);
     const lats=slice.map(p=>p.lat).join(',');
     const lons=slice.map(p=>p.lon).join(',');
+    // timezone=Europe/Helsinki so API times match our Helsinki time strings
     const url=`https://api.open-meteo.com/v1/forecast`+
       `?latitude=${lats}&longitude=${lons}`+
-      `&hourly=cloudcover&timezone=Europe%2FHelsinki`+
-      `&forecast_days=2&models=${modelName}`;
+      `&hourly=cloudcover`+
+      `&timezone=Europe%2FHelsinki`+
+      `&forecast_days=2`+
+      `&models=${modelApi}`;
     try{
       const res=await fetch(url);
       if(!res.ok) continue;
       const json=await res.json();
-      // Always wrap in array
       const arr=Array.isArray(json)?json:[json];
-      for(let j=0;j<slice.length;j++){
-        const d=arr[j];
-        if(d&&d.hourly) out[i+j]=avgCloud(d.hourly,hours);
+      for(let j=0;j<slice.length&&j<arr.length;j++){
+        out[i+j]=avgCloud(arr[j]?.hourly, hours);
       }
-    }catch(e){/* keep nulls */}
+    }catch(e){ /* keep nulls */ }
   }
   return out;
 }
 
-// ── Region name from coords ───────────────────────────────
+// ── Region name ───────────────────────────────────────────
 function regionName(lat,lon,dist,dir){
   if(dist<25) return 'Rovaniemi';
   if(lat>69&&lon>26) return 'Utsjoki area';
@@ -322,51 +365,59 @@ function regionName(lat,lon,dist,dir){
   if(lon<23.5) return 'Swedish Lapland';
   if(lon>29) return 'Russian border area';
   if(lat<65.5) return 'Oulu region';
-  return `${dir} Lapland`;
+  return dir+' Lapland';
 }
 
 // ── Main scan ─────────────────────────────────────────────
 async function runScan(windowH){
-  const hours=targetHours(windowH);
+  const hours=makeTargetHours(windowH);
 
-  // Show progress
   document.getElementById('hero').innerHTML=`
     <div style="font-size:10px;color:#38bdf8;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">
-      <span class="ldot"></span>Scanning ${GRID.length} grid points · ${windowH}h window
+      <span class="ldot"></span>Scanning ${GRID.length} points · +${windowH}h window
     </div>
-    <div class="loading"><span class="spinner"></span>Fetching ICON-EU...</div>`;
+    <div class="loading"><span class="spinner"></span>Fetching ICON-EU (1/3)...</div>`;
 
-  // Fetch 3 models sequentially (one at a time to keep API happy)
-  const iconeu = await fetchOneModel(GRID,'icon_eu',hours);
-  document.getElementById('hero').innerHTML=document.getElementById('hero').innerHTML.replace('ICON-EU...','ICON-EU ✓ · Fetching ECMWF...');
-  const ecmwf  = await fetchOneModel(GRID,'ecmwf_ifs04',hours);
-  document.getElementById('hero').innerHTML=document.getElementById('hero').innerHTML.replace('ECMWF...','ECMWF ✓ · Fetching GFS...');
-  const gfs    = await fetchOneModel(GRID,'gfs_seamless',hours);
+  const clouds={};
+  for(const m of MODELS){
+    const data=await fetchOneModel(GRID, m.api, hours);
+    clouds[m.key]=data;
+    // update progress
+    const done=MODELS.indexOf(m)+1;
+    const next=MODELS[done];
+    if(next){
+      document.getElementById('hero').querySelector('.loading').innerHTML=
+        `<span class="spinner"></span>${m.label} ✓ · Fetching ${next.label} (${done+1}/3)...`;
+    }
+  }
 
   // Build results
   scanResults=GRID.map((pt,i)=>{
-    const vals=[iconeu[i],ecmwf[i],gfs[i]].filter(v=>v!==null);
-    const avg=vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):null;
+    const vals=MODELS.map(m=>clouds[m.key][i]).filter(v=>v!==null);
+    if(!vals.length) return null;
+    const avg=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
     const spread=vals.length>1?Math.max(...vals)-Math.min(...vals):null;
     const confidence=spread!==null?Math.max(0,Math.round(100-spread)):50;
     const driveMin=Math.round(pt.dist/DRIVE_KMH*60);
+    const modelVals={};
+    MODELS.forEach(m=>{ modelVals[m.key]=clouds[m.key][i]; });
     return{
       ...pt,
       name:regionName(pt.lat,pt.lon,pt.dist,pt.dir),
-      avg,spread,confidence,driveMin,
-      iconeu:iconeu[i],ecmwf:ecmwf[i],gfs:gfs[i],
-      score:avg!==null?avg+(pt.dist/250)*10:999
+      avg, spread, confidence, driveMin,
+      ...modelVals,
+      score: avg+(pt.dist/250)*10
     };
-  }).filter(r=>r.avg!==null).sort((a,b)=>a.score-b.score);
+  }).filter(Boolean).sort((a,b)=>a.score-b.score);
 
-  // Deduplicate by name
-  const seen=new Set(),best=[];
+  // Deduplicate by region name
+  const seen=new Set(), best=[];
   for(const r of scanResults){
     if(!seen.has(r.name)){seen.add(r.name);best.push(r);}
   }
 
-  // Rovaniemi
-  const rovR=scanResults.find(r=>r.dist<30)||scanResults[0];
+  // Rovaniemi value
+  const rovR=scanResults.find(r=>r.dist<30);
   if(rovR){
     document.getElementById('rov-pct').textContent=rovR.avg+'%';
     document.getElementById('rov-pct').style.color=cc(rovR.avg);
@@ -374,7 +425,7 @@ async function runScan(windowH){
     document.getElementById('rov-bar').style.background=cc(rovR.avg);
   }
 
-  renderHero(best[0],windowH);
+  renderHero(best[0], windowH);
   renderSpots(best.slice(0,8));
   renderMapSpots(best.slice(0,5));
   if(document.getElementById('t-map').classList.contains('on')) drawMap();
@@ -383,23 +434,26 @@ async function runScan(windowH){
   document.getElementById('scan-info').textContent=
     `${GRID.length} pts · ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
   document.getElementById('footer-info').textContent=
-    `ICON-EU + ECMWF + GFS · +${windowH}h window · ~80 km/h drive`;
+    `ICON-EU + ECMWF IFS025 + GFS · +${windowH}h · ~80 km/h drive`;
 
   loadHourly();
   loadModels();
 }
 
 // ── Render hero ───────────────────────────────────────────
-function renderHero(s,windowH){
-  if(!s){document.getElementById('hero').innerHTML='<div class="loading">No data available — try again</div>';return;}
+function renderHero(s, windowH){
+  if(!s){
+    document.getElementById('hero').innerHTML=
+      '<div class="loading">No clear spots found — all areas overcast</div>';
+    return;
+  }
   const col=cc(s.avg);
   const arrive=new Date(Date.now()+s.driveMin*60000);
-  const arrStr=arrive.getHours().toString().padStart(2,'0')+':'+arrive.getMinutes().toString().padStart(2,'0');
-  const mdots=['ICON-EU:'+s.iconeu,'ECMWF:'+s.ecmwf,'GFS:'+s.gfs].map(x=>{
-    const[lbl,val]=x.split(':');
-    const v=safe(val);
-    if(v===null) return '';
-    return `<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${cbg(v)};color:${cc(v)}">${lbl} ${v}%</span>`;
+  const arrStr=arrive.toLocaleString('sv-SE',{timeZone:'Europe/Helsinki'}).slice(11,16);
+  const mdots=MODELS.map(m=>{
+    const v=s[m.key];
+    if(v===null||v===undefined) return '';
+    return `<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${cbg(v)};color:${cc(v)}">${m.label} ${v}%</span>`;
   }).join('');
 
   document.getElementById('hero').innerHTML=`
@@ -413,12 +467,12 @@ function renderHero(s,windowH){
       <span><i class="ti ti-clock" style="font-size:11px;vertical-align:-1px"></i> Arrive ~${arrStr}</span>
     </div>
     <div style="font-size:52px;font-weight:500;color:${col};line-height:1">${s.avg}%</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:10px">avg cloud · ${cl(s.avg)}</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:10px">avg cloud cover · ${cl(s.avg)}</div>
     <div style="height:0.5px;background:#1e2840;margin-bottom:10px"></div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-      <div style="text-align:center"><div style="font-size:14px;font-weight:500;color:${s.confidence>=70?'#4ade80':s.confidence>=40?'#fbbf24':'#f87171'}">${s.confidence}%</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px">Model agree</div></div>
-      <div style="text-align:center"><div style="font-size:14px;font-weight:500;color:#fff">${s.spread!==null?'±'+Math.round(s.spread/2)+'%':'—'}</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px">Spread</div></div>
-      <div style="text-align:center"><div style="font-size:14px;font-weight:500;color:${col}">${100-s.avg}%</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px">Clear prob.</div></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;text-align:center">
+      <div><div style="font-size:14px;font-weight:500;color:${s.confidence>=70?'#4ade80':s.confidence>=40?'#fbbf24':'#f87171'}">${s.confidence}%</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px">Model agree</div></div>
+      <div><div style="font-size:14px;font-weight:500;color:#fff">${s.spread!==null?'±'+Math.round(s.spread/2)+'%':'—'}</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px">Spread</div></div>
+      <div><div style="font-size:14px;font-weight:500;color:${col}">${100-s.avg}%</div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px">Clear prob.</div></div>
     </div>
     <div style="display:flex;gap:4px;flex-wrap:wrap">${mdots}</div>
     <div style="height:4px;background:#1e2840;border-radius:2px;overflow:hidden;margin-top:10px">
@@ -430,23 +484,23 @@ function renderHero(s,windowH){
 function renderSpots(spots){
   document.getElementById('spot-list').innerHTML=spots.map((s,i)=>{
     const col=cc(s.avg);
-    const mdots=['ICON-EU:'+s.iconeu,'ECMWF:'+s.ecmwf,'GFS:'+s.gfs].map(x=>{
-      const[lbl,val]=x.split(':');
-      const v=safe(val);
-      if(v===null)return'';
-      return `<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:${cbg(v)};color:${cc(v)}">${lbl} ${v}%</span>`;
+    const mdots=MODELS.map(m=>{
+      const v=s[m.key];
+      if(v===null||v===undefined) return '';
+      return `<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:${cbg(v)};color:${cc(v)}">${m.label} ${v}%</span>`;
     }).join('');
     return `<div class="spot-item">
       <div style="font-size:11px;color:rgba(255,255,255,0.25);width:16px;text-align:center">${i+1}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;color:#fff">${s.name}</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;display:flex;gap:8px">
-          <span>${s.dist} km ${s.dir}</span><span>~${s.driveMin} min</span>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap">
+          <span>${s.dist} km ${s.dir}</span>
+          <span>~${s.driveMin} min</span>
           <span style="color:${s.confidence>=70?'#4ade80':s.confidence>=40?'#fbbf24':'#f87171'}">${s.confidence}% agree</span>
         </div>
         <div style="display:flex;gap:3px;margin-top:4px;flex-wrap:wrap">${mdots}</div>
       </div>
-      <div style="text-align:right">
+      <div style="text-align:right;flex-shrink:0">
         <div style="font-size:16px;font-weight:500;color:${col}">${s.avg}%</div>
         <div style="font-size:9px;color:${col}">${cl(s.avg)}</div>
       </div>
@@ -459,7 +513,8 @@ function renderMapSpots(spots){
     <div class="row">
       <div style="display:flex;align-items:center;gap:8px">
         <div style="font-size:11px;color:rgba(255,255,255,0.25);width:16px">${i+1}</div>
-        <div><div style="font-size:12px;color:#fff">${s.name}</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">${s.dist} km ${s.dir} · ~${s.driveMin} min</div></div>
+        <div><div style="font-size:12px;color:#fff">${s.name}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4)">${s.dist} km ${s.dir} · ~${s.driveMin} min</div></div>
       </div>
       <div style="font-size:14px;font-weight:500;color:${cc(s.avg)}">${s.avg}%</div>
     </div>`).join('');
@@ -469,54 +524,57 @@ function renderMapSpots(spots){
 function drawMap(){
   const canvas=document.getElementById('skymap');
   const W=canvas.offsetWidth||360;
-  canvas.width=W;canvas.height=300;
+  canvas.width=W; canvas.height=300;
   const ctx=canvas.getContext('2d');
-  ctx.fillStyle='#0a0c1a';ctx.fillRect(0,0,W,300);
-  const cx=W/2,cy=150;
-  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=0.5;
-  [50,100,150,200,250].forEach(r=>{ctx.beginPath();ctx.arc(cx,cy,r*(W/2)/250,0,Math.PI*2);ctx.stroke();});
-  ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='9px sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#0a0c1a'; ctx.fillRect(0,0,W,300);
+  const cx=W/2, cy=150;
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=0.5;
+  [50,100,150,200,250].forEach(r=>{
+    ctx.beginPath(); ctx.arc(cx,cy,r*(W/2)/250,0,Math.PI*2); ctx.stroke();
+  });
+  ctx.fillStyle='rgba(255,255,255,0.18)'; ctx.font='9px sans-serif'; ctx.textAlign='center';
   [100,200].forEach(r=>ctx.fillText(r+'km',cx+r*(W/2)/250+4,cy-3));
 
   scanResults.forEach(r=>{
-    if(r.avg===null)return;
-    const dlat=(r.lat-ROV.lat)*111,dlon=(r.lon-ROV.lon)*44;
-    const x=cx+dlon*(W/2)/250,y=cy-dlat*150/250;
-    ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);
-    ctx.fillStyle=cc(r.avg)+'bb';ctx.fill();
+    const dlat=(r.lat-ROV.lat)*111, dlon=(r.lon-ROV.lon)*44;
+    const x=cx+dlon*(W/2)/250, y=cy-dlat*150/250;
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fillStyle=cc(r.avg)+'bb'; ctx.fill();
   });
 
-  // Best spots numbered
-  const seen=new Set(),best=[];
-  for(const r of scanResults){if(!seen.has(r.name)){seen.add(r.name);best.push(r);if(best.length>=5)break;}}
+  const seen=new Set(), best=[];
+  for(const r of scanResults){
+    if(!seen.has(r.name)){seen.add(r.name);best.push(r);if(best.length>=5)break;}
+  }
   best.forEach((s,i)=>{
-    const dlat=(s.lat-ROV.lat)*111,dlon=(s.lon-ROV.lon)*44;
-    const x=cx+dlon*(W/2)/250,y=cy-dlat*150/250;
-    ctx.beginPath();ctx.arc(x,y,9,0,Math.PI*2);
-    ctx.fillStyle='rgba(56,189,248,0.9)';ctx.fill();
-    ctx.fillStyle='#000';ctx.font='bold 9px sans-serif';ctx.textAlign='center';
+    const dlat=(s.lat-ROV.lat)*111, dlon=(s.lon-ROV.lon)*44;
+    const x=cx+dlon*(W/2)/250, y=cy-dlat*150/250;
+    ctx.beginPath(); ctx.arc(x,y,9,0,Math.PI*2);
+    ctx.fillStyle='rgba(56,189,248,0.9)'; ctx.fill();
+    ctx.fillStyle='#000'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
     ctx.fillText(i+1,x,y+3);
   });
 
-  ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
-  ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle='#38bdf8';ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='bold 9px sans-serif';
-  ctx.textAlign='left';ctx.fillText('ROV',cx+10,cy+3);
+  ctx.beginPath(); ctx.arc(cx,cy,8,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2); ctx.fillStyle='#38bdf8'; ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='bold 9px sans-serif';
+  ctx.textAlign='left'; ctx.fillText('ROV',cx+10,cy+3);
 }
 
 // ── Hourly strip ──────────────────────────────────────────
 async function loadHourly(){
   try{
-    const hours=tonightHours();
+    const hours=makeTonightHours();
     const url=`https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu`;
     const res=await fetch(url);
     const json=await res.json();
     const d=Array.isArray(json)?json[0]:json;
     const avgs=hours.map(h=>avgCloud(d.hourly,[h]));
-    const minV=Math.min(...avgs.filter(v=>v!==null));
+    const validAvgs=avgs.filter(v=>v!==null);
+    const minV=validAvgs.length?Math.min(...validAvgs):null;
     const el=document.getElementById('hour-strip');
     el.innerHTML=hours.map((h,i)=>{
-      const v=avgs[i];if(v===null)return'';
+      const v=avgs[i]; if(v===null) return '';
       const hr=h.slice(11,13);
       const isBest=v===minV;
       return `<div class="hour-chip${isBest?' best':''}">
@@ -525,25 +583,24 @@ async function loadHourly(){
         <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px">${cl(v)}</div>
       </div>`;
     }).join('');
-  }catch(e){document.getElementById('hour-strip').innerHTML='<div style="font-size:11px;color:rgba(255,255,255,0.3);padding:10px">Hourly data unavailable</div>';}
+    if(!el.innerHTML.trim()) el.innerHTML='<div style="font-size:11px;color:rgba(255,255,255,0.3);padding:10px">No evening data yet</div>';
+  }catch(e){
+    document.getElementById('hour-strip').innerHTML=
+      '<div style="font-size:11px;color:rgba(255,255,255,0.3);padding:10px">Hourly unavailable</div>';
+  }
 }
 
 // ── Models tab ────────────────────────────────────────────
 async function loadModels(){
-  const hours=targetHours(currentWindow);
-  const defs=[
-    {model:'icon_eu',     label:'ICON-EU', color:'#38bdf8'},
-    {model:'ecmwf_ifs04', label:'ECMWF',   color:'#a78bfa'},
-    {model:'gfs_seamless',label:'GFS',     color:'#4ade80'},
-  ];
+  const hours=makeTargetHours(currentWindow);
   const vals=[];
-  for(const md of defs){
+  for(const m of MODELS){
     try{
-      const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=${md.model}`);
+      const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=${m.api}`);
       const json=await res.json();
       const d=Array.isArray(json)?json[0]:json;
-      const v=avgCloud(d.hourly,hours);
-      if(v!==null) vals.push({...md,val:v});
+      const v=avgCloud(d.hourly, hours);
+      if(v!==null) vals.push({...m, val:v});
     }catch(e){}
   }
   if(!vals.length){
@@ -557,7 +614,7 @@ async function loadModels(){
         <div style="width:${d.val}%;height:100%;background:${cc(d.val)};border-radius:3px"></div>
       </div>
       <div style="font-size:12px;font-weight:500;color:${cc(d.val)};width:34px;text-align:right">${d.val}%</div>
-      <div style="font-size:9px;padding:2px 6px;border-radius:7px;background:${cbg(d.val)};color:${cc(d.val)};width:52px;text-align:center">${cl(d.val)}</div>
+      <div style="font-size:9px;padding:2px 6px;border-radius:7px;background:${cbg(d.val)};color:${cc(d.val)};width:56px;text-align:center">${cl(d.val)}</div>
     </div>`).join('');
 
   const vv=vals.map(v=>v.val);
@@ -577,10 +634,12 @@ function setSat(id){
   document.getElementById('sat-'+id).classList.add('on');
   document.getElementById('sb-'+id).classList.add('on');
   if(id==='nasa'){
-    const d=new Date();d.setDate(d.getDate()-1);
-    const date=d.toISOString().slice(0,10);
     const img=document.getElementById('nasa-img');
-    if(img&&!img.src) img.src=`https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=60,15,72,40&CRS=EPSG:4326&WIDTH=512&HEIGHT=300&LAYERS=MODIS_Terra_CorrectedReflectance_TrueColor&STYLES=&FORMAT=image/jpeg&TIME=${date}`;
+    if(img&&!img.src){
+      const d=new Date(); d.setDate(d.getDate()-1);
+      const date=d.toISOString().slice(0,10);
+      img.src=`https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=60,15,72,40&CRS=EPSG:4326&WIDTH=512&HEIGHT=300&LAYERS=MODIS_Terra_CorrectedReflectance_TrueColor&STYLES=&FORMAT=image/jpeg&TIME=${date}`;
+    }
   }
 }
 function getNASADate(){const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);}
@@ -594,7 +653,7 @@ function setWindyModel(m){
   document.getElementById('wb-ecmwf').style.color=m==='ecmwf'?'#38bdf8':'rgba(255,255,255,0.3)';
 }
 
-// ── Time window ───────────────────────────────────────────
+// ── Time window selector ──────────────────────────────────
 function setWindow(h,el){
   currentWindow=h;
   document.querySelectorAll('.time-tab').forEach(t=>t.classList.remove('on'));

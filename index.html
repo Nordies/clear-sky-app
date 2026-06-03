@@ -435,23 +435,24 @@ async function fetchModel(pts, model){
   const lons=pts.map(p=>p.lon).join(',');
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=${model}`;
   const r=await fetch(url);
-  return await r.json();
+  const data=await r.json();
+  // Open-Meteo returns array when multiple locations, single object for one location
+  const arr=Array.isArray(data)?data:[data];
+  // Ensure we have one entry per point; pad with nulls if mismatch
+  while(arr.length<pts.length) arr.push({hourly:{time:[],cloudcover:[]}});
+  return arr;
 }
 
-// Extract cloud value at specific hour from hourly data
-function getHourCloud(hourly, hour){
-  if(!hourly||!hourly.time) return null;
-  const idx=hourly.time.indexOf(hour);
-  return idx>=0 ? hourly.cloudcover[idx] : null;
-}
-
-// Average cloud across hours
+// Average cloud across hours — NaN-safe
 function avgHours(hourly, hours){
-  if(!hourly||!hourly.time) return null;
-  let sum=0,cnt=0;
+  if(!hourly||!hourly.time||!hourly.cloudcover) return null;
+  let sum=0, cnt=0;
   hours.forEach(h=>{
     const idx=hourly.time.indexOf(h);
-    if(idx>=0){sum+=hourly.cloudcover[idx];cnt++;}
+    if(idx>=0){
+      const v=hourly.cloudcover[idx];
+      if(v!==null&&v!==undefined&&!isNaN(v)){sum+=v;cnt++;}
+    }
   });
   return cnt>0 ? Math.round(sum/cnt) : null;
 }
@@ -468,11 +469,10 @@ async function runScan(windowH){
     models.map(m => fetchModel(allGridPts, m))
   );
 
-  // Parse results
+  // Parse results — fetchModel now always returns array
   modelKeys.forEach((key, mi) => {
     if(results[mi].status==='fulfilled'){
-      const data=results[mi].value;
-      const arr=Array.isArray(data)?data:[data];
+      const arr=results[mi].value;
       allGridClouds[key] = arr.map(d => avgHours(d.hourly, targetHours));
     } else {
       allGridClouds[key] = allGridPts.map(()=>null);
@@ -744,7 +744,7 @@ async function loadModels(){
 
     if(vals.length>1){
       const spread=Math.max(...vals.map(v=>v.val))-Math.min(...vals.map(v=>v.val));
-      const mean=Math.round(vals.reduce((a,b)=>a+{val:b.val},{val:0}).val/vals.length);
+      const mean=Math.round(vals.reduce((a,b)=>a+b.val,0)/vals.length);
       const agC=spread<15?'#4ade80':spread<30?'#fbbf24':'#f87171';
       document.getElementById('model-agreement').innerHTML=`
         <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Average cloud now</div><div style="font-size:14px;font-weight:500;color:${cc(mean)}">${mean}%</div></div>

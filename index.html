@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#060810">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clear Sky">
+<meta name="description" content="Find cloud-free zones near Rovaniemi for aurora hunting">
+<title>Clear Sky Finder — Rovaniemi</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#060810;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#fff;overflow-x:hidden}
+#app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.logo-bar{display:flex;justify-content:center;align-items:center;padding:10px 20px 4px;background:#060810}
+.logo-bar img{height:36px;width:auto;object-fit:contain}
+.sbar{display:flex;justify-content:space-between;align-items:center;padding:4px 20px 6px;font-size:11px;color:rgba(255,255,255,0.3)}
+.tabs{display:flex;border-bottom:0.5px solid #151525;background:#060810;position:sticky;top:0;z-index:10}
+.tab{flex:1;padding:9px 0 7px;font-size:10px;color:rgba(255,255,255,0.3);text-align:center;cursor:pointer;border-bottom:2px solid transparent;transition:color 0.15s;user-select:none}
+.tab.on{color:#38bdf8;border-bottom-color:#38bdf8}
+.tab i{font-size:13px;display:block;margin:0 auto 1px}
+.scr{display:none;padding:14px;flex:1}
+.scr.on{display:block}
+.sec{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;text-transform:uppercase;margin:14px 0 8px}
+.card{background:#0d1020;border:0.5px solid #1a1a30;border-radius:14px;padding:13px;margin-bottom:8px}
+.row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid #131325}
+.row:last-child{border-bottom:none}
+.ldot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;margin-right:5px;vertical-align:middle;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.loading{font-size:11px;color:rgba(255,255,255,0.3);padding:16px 0;text-align:center}
+.bottom-pad{height:env(safe-area-inset-bottom,16px)}
+a{color:#38bdf8;text-decoration:none}
+.tap-btn{display:flex;align-items:center;justify-content:space-between;background:#0d1020;border:0.5px solid #1a1a30;border-radius:12px;padding:11px 14px;margin-bottom:8px;cursor:pointer;transition:background 0.15s}
+.tap-btn:active{background:#151530}
+.tap-btn-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+
+/* Clear Sky tab */
+.hero-card{background:#0d1020;border:0.5px solid #1a1a30;border-radius:16px;padding:16px;margin-bottom:10px}
+.best-spot-label{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
+.best-spot-name{font-size:22px;font-weight:500;color:#fff;margin-bottom:4px}
+.best-spot-meta{font-size:12px;color:rgba(255,255,255,0.45);display:flex;gap:12px;flex-wrap:wrap}
+.best-spot-cloud{font-size:48px;font-weight:500;line-height:1;margin:10px 0 4px}
+.confidence-bar{height:4px;background:#151525;border-radius:2px;overflow:hidden;margin-top:10px}
+.confidence-fill{height:100%;border-radius:2px;transition:width 0.5s}
+
+/* Map canvas */
+.map-wrap{background:#0a0c1a;border:0.5px solid #1a1a30;border-radius:14px;overflow:hidden;margin-bottom:10px;position:relative}
+#skymap{width:100%;display:block;cursor:crosshair}
+.map-legend{display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;border-top:0.5px solid #1a1a30}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(255,255,255,0.45)}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Spot list */
+.spot-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid #131325}
+.spot-row:last-child{border-bottom:none}
+.spot-rank{font-size:11px;color:rgba(255,255,255,0.3);width:18px;flex-shrink:0;text-align:center}
+.spot-name{font-size:12px;color:#fff;flex:1}
+.spot-dist{font-size:11px;color:rgba(255,255,255,0.4);flex-shrink:0}
+.spot-cloud-pill{font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;flex-shrink:0;min-width:40px;text-align:center}
+
+/* Hourly */
+.hour-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.hour-cell{background:#0d1020;border:0.5px solid #1a1a30;border-radius:10px;padding:8px 6px;text-align:center}
+.hour-time{font-size:10px;color:rgba(255,255,255,0.35);margin-bottom:5px}
+.hour-cloud{font-size:16px;font-weight:500}
+.hour-model{font-size:9px;color:rgba(255,255,255,0.25);margin-top:3px}
+
+/* Model comparison */
+.model-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid #131325}
+.model-row:last-child{border-bottom:none}
+.model-name{font-size:12px;font-weight:500;color:#fff;width:80px;flex-shrink:0}
+.model-bar-wrap{flex:1;height:6px;background:#151525;border-radius:3px;overflow:hidden}
+.model-bar{height:100%;border-radius:3px}
+.model-val{font-size:12px;font-weight:500;width:36px;text-align:right;flex-shrink:0}
+.model-badge{font-size:10px;padding:2px 7px;border-radius:8px;flex-shrink:0}
+
+/* Windy */
+.map-frame{border-radius:12px;overflow:hidden;border:0.5px solid #1a1a30;background:#0a0c1a;margin-bottom:8px;position:relative}
+.map-overlay-tap{position:absolute;top:0;left:0;right:0;bottom:0;z-index:10;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="logo-bar">
+  <img src="logo.png" alt="Nordies Tour" onerror="this.style.display='none'">
+</div>
+
+<div class="sbar">
+  <span id="time-now">—</span>
+  <span style="color:rgba(255,255,255,0.2)">Clear Sky Finder · Rovaniemi</span>
+  <span><span class="ldot"></span>Live</span>
+</div>
+
+<div class="tabs">
+  <div class="tab on" onclick="go('sky',this)"><i class="ti ti-cloud-off"></i>Clear Sky</div>
+  <div class="tab" onclick="go('hourly',this)"><i class="ti ti-clock"></i>Hourly</div>
+  <div class="tab" onclick="go('models',this)"><i class="ti ti-chart-bar"></i>Models</div>
+  <div class="tab" onclick="go('windy',this)"><i class="ti ti-map"></i>Windy</div>
+  <div class="tab" onclick="go('aurora',this)"><i class="ti ti-star"></i>Aurora</div>
+</div>
+
+<!-- CLEAR SKY TAB -->
+<div id="t-sky" class="scr on">
+  <div class="hero-card" id="hero-card">
+    <div class="best-spot-label">Best spot tonight</div>
+    <div class="loading">Scanning 250 km radius...</div>
+  </div>
+
+  <div class="sec">Cloud map — 250 km radius</div>
+  <div class="map-wrap">
+    <canvas id="skymap" height="300"></canvas>
+    <div class="map-legend">
+      <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>0–20% clear</div>
+      <div class="leg"><div class="leg-dot" style="background:#facc15"></div>21–50%</div>
+      <div class="leg"><div class="leg-dot" style="background:#f97316"></div>51–80%</div>
+      <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>81–100% cloudy</div>
+    </div>
+  </div>
+
+  <div class="sec">Top clear spots tonight</div>
+  <div class="card" id="spot-list"><div class="loading">Loading...</div></div>
+
+  <div style="font-size:10px;color:rgba(255,255,255,0.2);text-align:center;margin-top:6px">
+    Model: ICON-EU · <span id="scan-time">—</span> · 313 grid points scanned
+  </div>
+  <div class="bottom-pad"></div>
+</div>
+
+<!-- HOURLY TAB -->
+<div id="t-hourly" class="scr">
+  <div class="sec">Tonight's cloud forecast — Rovaniemi</div>
+  <div class="hour-grid" id="hourly-rovaniemi" style="margin-bottom:12px">
+    <div class="loading" style="grid-column:1/-1">Loading...</div>
+  </div>
+
+  <div class="sec">Hourly — Best spot</div>
+  <div class="hour-grid" id="hourly-best">
+    <div class="loading" style="grid-column:1/-1">Find best spot first...</div>
+  </div>
+
+  <div class="sec" style="margin-top:16px">FMI forecast — Rovaniemi</div>
+  <div class="card" id="fmi-hourly"><div class="loading">Loading FMI data...</div></div>
+
+  <div class="sec">Yr.no forecast</div>
+  <div class="card" id="yr-hourly"><div class="loading">Loading Yr data...</div></div>
+
+  <div class="bottom-pad"></div>
+</div>
+
+<!-- MODELS TAB -->
+<div id="t-models" class="scr">
+  <div class="sec">Model comparison — Rovaniemi tonight</div>
+  <div class="card" id="model-compare"><div class="loading">Loading models...</div></div>
+
+  <div class="sec">Model guide</div>
+  <div class="card">
+    <div class="row">
+      <div style="font-size:12px;color:#fff;font-weight:500">ICON-EU</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">Best for winter Finland. 7km res, 3h intervals</div>
+    </div>
+    <div class="row">
+      <div style="font-size:12px;color:#fff;font-weight:500">ECMWF</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">Best for autumn. Global, 9km res</div>
+    </div>
+    <div class="row">
+      <div style="font-size:12px;color:#fff;font-weight:500">FMI</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">Finnish Met Institute. 2.5km local accuracy</div>
+    </div>
+    <div class="row">
+      <div style="font-size:12px;color:#fff;font-weight:500">Yr (MetNo)</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">Norwegian model, good for Lapland</div>
+    </div>
+    <div class="row">
+      <div style="font-size:12px;color:#fff;font-weight:500">GFS</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:right;max-width:200px">US model, useful for 5–7 day outlook</div>
+    </div>
+  </div>
+
+  <div class="sec">Model agreement score</div>
+  <div class="card" id="model-agreement"><div class="loading">Calculating...</div></div>
+
+  <div class="bottom-pad"></div>
+</div>
+
+<!-- WINDY TAB -->
+<div id="t-windy" class="scr">
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <div class="tap-btn" style="flex:1" id="btn-iconeu" onclick="setWindyModel('iconEu')">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500;color:#fff">ICON-EU</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4)">Winter · recommended</div>
+      </div>
+      <div id="badge-iconeu" style="font-size:10px;background:rgba(56,189,248,0.15);color:#38bdf8;padding:2px 8px;border-radius:8px">Active</div>
+    </div>
+    <div class="tap-btn" style="flex:1" id="btn-ecmwf" onclick="setWindyModel('ecmwf')">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500;color:#fff">ECMWF</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4)">Autumn · global</div>
+      </div>
+      <div id="badge-ecmwf" style="font-size:10px;color:rgba(255,255,255,0.3);padding:2px 8px">—</div>
+    </div>
+  </div>
+
+  <div class="map-frame" id="windy-frame-wrap">
+    <iframe id="windy-iframe"
+      src="https://embed.windy.com/embed2.html?lat=66.5&lon=25.73&detailLat=66.5&detailLon=25.73&width=400&height=320&zoom=5&level=surface&overlay=clouds&product=iconEu&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1"
+      style="width:100%;height:320px;border:none;display:block"
+      allowfullscreen loading="lazy">
+    </iframe>
+    <div class="map-overlay-tap" onclick="window.open('https://www.windy.com/?clouds,66.5,25.73,5','_blank')"></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px">
+    <div class="tap-btn" onclick="window.open('https://www.windy.com/?clouds,66.5,25.73,5','_blank')">
+      <div class="tap-btn-icon" style="background:#0a1520;color:#38bdf8"><i class="ti ti-cloud" aria-hidden="true"></i></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Cloud layer</div></div>
+      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
+    </div>
+    <div class="tap-btn" onclick="window.open('https://www.windy.com/?rain,66.5,25.73,5','_blank')">
+      <div class="tap-btn-icon" style="background:#0a1a10;color:#4ade80"><i class="ti ti-cloud-rain" aria-hidden="true"></i></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Precipitation</div></div>
+      <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
+    </div>
+  </div>
+
+  <div class="sec">Other cloud apps</div>
+  <div class="tap-btn" onclick="window.open('https://www.yr.no/en/map/details/2-643492/Norway/Troms+og+Finnmark/Troms%C3%B8/Troms%C3%B8?lat=66.5&lon=25.73','_blank')">
+    <div class="tap-btn-icon" style="background:#0a1520;color:#60a5fa"><i class="ti ti-map-2" aria-hidden="true"></i></div>
+    <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Yr.no</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Norwegian Met · cloud map</div></div>
+    <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
+  </div>
+  <div class="tap-btn" onclick="window.open('https://en.ilmatieteenlaitos.fi/local-weather/rovaniemi','_blank')">
+    <div class="tap-btn-icon" style="background:#0f1a0a;color:#4ade80"><i class="ti ti-flag" aria-hidden="true"></i></div>
+    <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">FMI</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Finnish Met Institute · 2.5km</div></div>
+    <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
+  </div>
+  <div class="tap-btn" onclick="window.open('https://www.meteoblue.com/en/weather/maps/#coords=5/66.5/25.73&map=clouds~daily~auto~sfc~none','_blank')">
+    <div class="tap-btn-icon" style="background:#1a100a;color:#fb923c"><i class="ti ti-cloud-storm" aria-hidden="true"></i></div>
+    <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Meteoblue</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Multi-model cloud maps</div></div>
+    <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
+  </div>
+  <div class="tap-btn" onclick="window.open('https://www.ventusky.com/?p=66.5;25.7;5&l=clouds','_blank')">
+    <div class="tap-btn-icon" style="background:#0a0a1a;color:#a78bfa"><i class="ti ti-satellite" aria-hidden="true"></i></div>
+    <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#fff">Ventusky</div><div style="font-size:10px;color:rgba(255,255,255,0.4)">Visual cloud animation</div></div>
+    <i class="ti ti-external-link" style="font-size:13px;color:rgba(255,255,255,0.25)" aria-hidden="true"></i>
+  </div>
+  <div class="bottom-pad"></div>
+</div>
+
+<!-- AURORA TAB -->
+<div id="t-aurora" class="scr">
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px">
+    <div class="card" style="text-align:center">
+      <div style="font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:6px">KP Index</div>
+      <div style="font-size:36px;font-weight:500" id="a-kp" style="color:#888">—</div>
+      <div style="font-size:11px;margin-top:4px" id="a-kp-label">Loading...</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:6px">Bz Component</div>
+      <div style="font-size:36px;font-weight:500" id="a-bz">—</div>
+      <div style="font-size:11px;margin-top:4px" id="a-bz-label">Loading...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px">Solar wind</div>
+    <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Speed</div><div><span id="a-speed" style="font-size:13px;font-weight:500;color:#fff">—</span><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:3px">km/s</span></div></div>
+    <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Density</div><div><span id="a-density" style="font-size:13px;font-weight:500;color:#fff">—</span><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:3px">p/cm³</span></div></div>
+    <div class="row"><div style="font-size:12px;color:rgba(255,255,255,0.6)">Bt</div><div><span id="a-bt" style="font-size:13px;font-weight:500;color:#fff">—</span><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:3px">nT</span></div></div>
+  </div>
+
+  <div class="sec">Tonight's combined score</div>
+  <div class="card" id="combined-score">
+    <div class="loading">Calculating...</div>
+  </div>
+
+  <div style="text-align:center;margin-top:10px">
+    <a href="https://www.nordiestour.com/tours" target="_blank" style="font-size:12px;color:#38bdf8">Book aurora tour at nordiestour.com ↗</a>
+  </div>
+  <div class="bottom-pad"></div>
+</div>
+
+</div>
+
+<script>
+const ROV = { lat: 66.5039, lon: 25.7294 };
+const RADIUS = 250;
+
+function updateTime(){
+  const n = new Date();
+  document.getElementById('time-now').textContent =
+    n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+}
+updateTime(); setInterval(updateTime, 30000);
+
+function go(id, el){
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('t-' + id).classList.add('on');
+  el.classList.add('on');
+}
+
+// Color helpers
+function cloudColor(v){ return v<=20?'#22c55e':v<=50?'#facc15':v<=80?'#f97316':'#ef4444'; }
+function cloudBg(v){ return v<=20?'rgba(34,197,94,0.15)':v<=50?'rgba(250,204,21,0.15)':v<=80?'rgba(249,115,22,0.15)':'rgba(239,68,68,0.15)'; }
+function kpColor(k){ return k>=5?'#f87171':k>=3?'#fbbf24':'#4ade80'; }
+function bzColor(v){ return v<-5?'#4ade80':v<0?'#a3e635':'#f87171'; }
+
+// Generate 250km grid points (~25km spacing)
+function generateGrid(){
+  const pts = [];
+  const stepLat = 0.225, stepLon = 0.568;
+  for(let lat = ROV.lat - 2.3; lat <= ROV.lat + 2.3; lat += stepLat){
+    for(let lon = ROV.lon - 5.7; lon <= ROV.lon + 5.7; lon += stepLon){
+      const dlat = (lat - ROV.lat) * 111;
+      const dlon = (lon - ROV.lon) * 44;
+      const dist = Math.sqrt(dlat*dlat + dlon*dlon);
+      if(dist <= RADIUS){
+        const bearing = Math.atan2(dlon, dlat) * 180 / Math.PI;
+        const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+        const dir = dirs[Math.round(((bearing + 360) % 360) / 45) % 8];
+        pts.push({ lat: Math.round(lat*1000)/1000, lon: Math.round(lon*1000)/1000, dist: Math.round(dist), dir });
+      }
+    }
+  }
+  return pts;
+}
+
+// Get tonight's hours (21:00 – 03:00 local)
+function getTonightHours(){
+  const hours = [];
+  const now = new Date();
+  const tonight = new Date(now);
+  tonight.setHours(21,0,0,0);
+  if(now.getHours() >= 3 && now.getHours() < 21) {
+    // evening hasn't started
+  } else if(now.getHours() < 3) {
+    tonight.setDate(tonight.getDate() - 1);
+  }
+  for(let h = 0; h < 7; h++){
+    const t = new Date(tonight.getTime() + h * 3600000);
+    hours.push(t.toISOString().slice(0,13) + ':00');
+  }
+  return hours;
+}
+
+// Fetch Open-Meteo for grid — batched
+async function fetchGridCloud(pts, model='icon_seamless'){
+  const lats = pts.map(p => p.lat).join(',');
+  const lons = pts.map(p => p.lon).join(',');
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=${model}`;
+  const r = await fetch(url);
+  return await r.json();
+}
+
+// Fetch single point for hourly detail
+async function fetchPointHourly(lat, lon){
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu,ecmwf_ifs04,gfs_seamless`;
+  const r = await fetch(url);
+  return await r.json();
+}
+
+// Yr.no API
+async function fetchYr(lat, lon){
+  try{
+    const r = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`, {
+      headers: { 'User-Agent': 'ClearSkyFinder/1.0 nordiestour.com' }
+    });
+    const d = await r.json();
+    return d.properties.timeseries;
+  }catch(e){ return null; }
+}
+
+// NOAA solar wind
+async function fetchSolar(){
+  try{
+    const [mag, plasma, kp] = await Promise.all([
+      fetch('https://services.swpc.noaa.gov/products/solar-wind/mag-7-day.json').then(r=>r.json()),
+      fetch('https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json').then(r=>r.json()),
+      fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json').then(r=>r.json()),
+    ]);
+    const m = mag[mag.length-1], p = plasma[plasma.length-1];
+    return {
+      bz: parseFloat(m[3]), bt: parseFloat(m[6]),
+      density: parseFloat(p[1]), speed: parseFloat(p[2]),
+      kp: parseFloat(kp[kp.length-1][1])
+    };
+  }catch(e){ return null; }
+}
+
+// Get average cloud for tonight's hours from hourly data
+function tonightAvg(hourlyData, tonightHours){
+  const times = hourlyData.time || [];
+  const clouds = hourlyData.cloudcover || [];
+  let sum = 0, count = 0;
+  tonightHours.forEach(h => {
+    const idx = times.indexOf(h);
+    if(idx >= 0){ sum += clouds[idx]; count++; }
+  });
+  return count > 0 ? Math.round(sum / count) : null;
+}
+
+// Direction label
+function dirLabel(dir, dist){
+  return `${dist} km ${dir}`;
+}
+
+// Draw cloud map on canvas
+function drawMap(canvas, pts, clouds){
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth;
+  canvas.width = W;
+  canvas.height = 300;
+  ctx.fillStyle = '#0a0c1a';
+  ctx.fillRect(0,0,W,300);
+
+  // Scale: 250km radius fits in canvas
+  const scaleX = (W/2) / 250 / (1/44);
+  const scaleY = (300/2) / 250 / (1/111);
+  const cx = W/2, cy = 150;
+
+  // Draw range rings
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  [50,100,150,200,250].forEach(r => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * (W/2) / 250, 0, Math.PI*2);
+    ctx.stroke();
+  });
+
+  // Range labels
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.font = '9px sans-serif';
+  ctx.textAlign = 'center';
+  [100,200].forEach(r => {
+    ctx.fillText(r+'km', cx + r*(W/2)/250 + 4, cy - 3);
+  });
+
+  // Draw points
+  pts.forEach((pt, i) => {
+    const cloud = clouds[i];
+    if(cloud === null) return;
+    const dlat = (pt.lat - ROV.lat) * 111;
+    const dlon = (pt.lon - ROV.lon) * 44;
+    const x = cx + dlon * (W/2) / 250;
+    const y = cy - dlat * 150 / 250;
+    const col = cloudColor(cloud);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI*2);
+    ctx.fillStyle = col + 'cc';
+    ctx.fill();
+  });
+
+  // Rovaniemi marker
+  ctx.beginPath();
+  ctx.arc(cx, cy, 7, 0, Math.PI*2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#38bdf8';
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = 'bold 9px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('ROV', cx + 9, cy + 3);
+}
+
+// Place name lookup (approximate regions)
+function regionName(lat, lon, dist, dir){
+  if(dist < 30) return 'Rovaniemi area';
+  if(lat > 68.5) return 'Northern Lapland';
+  if(lat > 67.5 && lon > 28) return 'Sodankylä area';
+  if(lat > 67.5 && lon < 24) return 'Muonio area';
+  if(lat > 67.5) return 'Central Lapland';
+  if(lon > 28) return 'Eastern Lapland';
+  if(lon < 23) return 'Swedish Lapland border';
+  if(lat < 65.5) return 'Southern Lapland';
+  return `${dir} of Rovaniemi`;
+}
+
+let gridPts = [];
+let gridClouds = [];
+let bestPt = null;
+
+async function loadClearSky(){
+  gridPts = generateGrid();
+  const tonightHours = getTonightHours();
+
+  // Batch fetch — Open-Meteo supports multiple lats/lons
+  const BATCH = 300;
+  const allClouds = [];
+
+  for(let i = 0; i < gridPts.length; i += BATCH){
+    const batch = gridPts.slice(i, i+BATCH);
+    try{
+      const data = await fetchGridCloud(batch, 'icon_eu');
+      const arr = Array.isArray(data) ? data : [data];
+      arr.forEach(d => {
+        const avg = tonightAvg(d.hourly, tonightHours);
+        allClouds.push(avg);
+      });
+    }catch(e){
+      batch.forEach(() => allClouds.push(null));
+    }
+  }
+
+  gridClouds = allClouds;
+
+  // Draw map
+  const canvas = document.getElementById('skymap');
+  drawMap(canvas, gridPts, gridClouds);
+
+  // Find top spots
+  const scored = gridPts.map((pt, i) => ({
+    ...pt, cloud: gridClouds[i],
+    name: regionName(pt.lat, pt.lon, pt.dist, pt.dir)
+  })).filter(p => p.cloud !== null).sort((a,b) => a.cloud - b.cloud);
+
+  bestPt = scored[0] || null;
+
+  // Hero card
+  const hero = document.getElementById('hero-card');
+  if(bestPt){
+    const col = cloudColor(bestPt.cloud);
+    hero.innerHTML = `
+      <div class="best-spot-label">Best spot tonight (21:00–03:00)</div>
+      <div class="best-spot-name">${bestPt.name}</div>
+      <div class="best-spot-meta">
+        <span><i class="ti ti-map-pin" style="font-size:12px;vertical-align:-1px" aria-hidden="true"></i> ${dirLabel(bestPt.dir, bestPt.dist)}</span>
+        <span><i class="ti ti-clock" style="font-size:12px;vertical-align:-1px" aria-hidden="true"></i> ~${Math.round(bestPt.dist/80*60)} min drive</span>
+      </div>
+      <div class="best-spot-cloud" style="color:${col}">${bestPt.cloud}%</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4)">avg cloud cover tonight</div>
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width:${100-bestPt.cloud}%;background:${col}"></div>
+      </div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:5px">Clear sky probability: ${100-bestPt.cloud}%</div>
+    `;
+  } else {
+    hero.innerHTML = `<div class="loading">No data available</div>`;
+  }
+
+  // Spot list — top 8 unique regions
+  const seen = new Set();
+  const topSpots = scored.filter(s => {
+    if(seen.has(s.name)) return false;
+    seen.add(s.name); return true;
+  }).slice(0,8);
+
+  const spotEl = document.getElementById('spot-list');
+  spotEl.innerHTML = topSpots.map((s,i) => {
+    const col = cloudColor(s.cloud);
+    return `<div class="spot-row">
+      <div class="spot-rank">${i+1}</div>
+      <div>
+        <div class="spot-name">${s.name}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.35)">${dirLabel(s.dir, s.dist)}</div>
+      </div>
+      <span class="spot-cloud-pill" style="background:${cloudBg(s.cloud)};color:${col}">${s.cloud}%</span>
+    </div>`;
+  }).join('');
+
+  const now = new Date();
+  document.getElementById('scan-time').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ' updated';
+
+  // Load hourly best spot
+  if(bestPt) loadHourlyBest(bestPt, tonightHours);
+}
+
+async function loadHourlyRov(tonightHours){
+  try{
+    const data = await fetchPointHourly(ROV.lat, ROV.lon);
+    const models = ['icon_eu','ecmwf_ifs04','gfs_seamless'];
+    const labels = ['ICON-EU','ECMWF','GFS'];
+
+    // Rovaniemi hourly grid
+    const rovEl = document.getElementById('hourly-rovaniemi');
+    const iconEuCloud = data.hourly?.cloudcover || [];
+    const times = data.hourly?.time || [];
+    const cells = tonightHours.map(h => {
+      const idx = times.indexOf(h);
+      const val = idx >= 0 ? iconEuCloud[idx] : null;
+      const hr = h.slice(11,13);
+      const col = val !== null ? cloudColor(val) : '#888';
+      return `<div class="hour-cell">
+        <div class="hour-time">${hr}:00</div>
+        <div class="hour-cloud" style="color:${col}">${val !== null ? val+'%' : '—'}</div>
+        <div class="hour-model">ICON-EU</div>
+      </div>`;
+    });
+    rovEl.innerHTML = cells.join('');
+
+    // Model comparison
+    const modelEl = document.getElementById('model-compare');
+    // Multi-model data from single request
+    const multiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${ROV.lat}&longitude=${ROV.lon}&hourly=cloudcover&timezone=Europe%2FHelsinki&forecast_days=2&models=icon_eu,ecmwf_ifs04,gfs_seamless`;
+    const mr = await fetch(multiUrl);
+    const md = await mr.json();
+
+    // Open-Meteo returns separate objects per model when multiple requested
+    const modelResults = Array.isArray(md) ? md : [md];
+    const modelLabels = ['ICON-EU','ECMWF IFS','GFS'];
+    const modelColors = ['#38bdf8','#a78bfa','#4ade80'];
+
+    const modelRows = modelResults.map((m, i) => {
+      const avg = tonightAvg(m.hourly, tonightHours);
+      if(avg === null) return '';
+      const col = cloudColor(avg);
+      return `<div class="model-row">
+        <div class="model-name" style="color:${modelColors[i]}">${modelLabels[i]}</div>
+        <div class="model-bar-wrap"><div class="model-bar" style="width:${avg}%;background:${col}"></div></div>
+        <div class="model-val" style="color:${col}">${avg}%</div>
+        <div class="model-badge" style="background:${cloudBg(avg)};color:${col}">${avg<=30?'Clear':avg<=60?'Partial':'Cloudy'}</div>
+      </div>`;
+    }).join('');
+    modelEl.innerHTML = modelRows || '<div class="loading">No data</div>';
+
+    // Agreement score
+    const vals = modelResults.map(m => tonightAvg(m.hourly, tonightHours)).filter(v => v !== null);
+    if(vals.length > 1){
+      const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+      const spread = Math.max(...vals) - Math.min(...vals);
+      const agreeEl = document.getElementById('model-agreement');
+      const agreeColor = spread < 15 ? '#4ade80' : spread < 30 ? '#fbbf24' : '#f87171';
+      agreeEl.innerHTML = `
+        <div class="row">
+          <div style="font-size:12px;color:rgba(255,255,255,0.6)">Avg cloud cover tonight</div>
+          <div style="font-size:14px;font-weight:500;color:${cloudColor(mean)}">${Math.round(mean)}%</div>
+        </div>
+        <div class="row">
+          <div style="font-size:12px;color:rgba(255,255,255,0.6)">Model spread</div>
+          <div style="font-size:13px;font-weight:500;color:${agreeColor}">±${Math.round(spread/2)}%</div>
+        </div>
+        <div class="row">
+          <div style="font-size:12px;color:rgba(255,255,255,0.6)">Confidence</div>
+          <div style="font-size:13px;font-weight:500;color:${agreeColor}">${spread<15?'High':spread<30?'Medium':'Low'}</div>
+        </div>
+      `;
+    }
+  }catch(e){
+    document.getElementById('hourly-rovaniemi').innerHTML = '<div class="loading">Error loading</div>';
+  }
+}
+
+async function loadHourlyBest(pt, tonightHours){
+  try{
+    const data = await fetchPointHourly(pt.lat, pt.lon);
+    const times = data.hourly?.time || [];
+    const clouds = data.hourly?.cloudcover || [];
+    const bestEl = document.getElementById('hourly-best');
+    const cells = tonightHours.map(h => {
+      const idx = times.indexOf(h);
+      const val = idx >= 0 ? clouds[idx] : null;
+      const hr = h.slice(11,13);
+      const col = val !== null ? cloudColor(val) : '#888';
+      return `<div class="hour-cell">
+        <div class="hour-time">${hr}:00</div>
+        <div class="hour-cloud" style="color:${col}">${val !== null ? val+'%' : '—'}</div>
+        <div class="hour-model" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pt.name.split(' ')[0]}</div>
+      </div>`;
+    });
+    bestEl.innerHTML = cells.join('');
+  }catch(e){}
+}
+
+async function loadYr(){
+  const data = await fetchYr(ROV.lat, ROV.lon);
+  const yrEl = document.getElementById('yr-hourly');
+  if(!data){ yrEl.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,0.4);padding:4px 0">Yr data unavailable (CORS)</div>'; return; }
+  const tonight = getTonightHours();
+  const rows = data.filter(ts => tonight.includes(ts.time.slice(0,16)+':00'))
+    .slice(0,6).map(ts => {
+      const cloud = ts.data.instant.details.cloud_area_fraction;
+      const hr = ts.time.slice(11,13);
+      const col = cloudColor(cloud);
+      return `<div class="row">
+        <div style="font-size:12px;color:rgba(255,255,255,0.6)">${hr}:00</div>
+        <div style="font-size:13px;font-weight:500;color:${col}">${Math.round(cloud)}%</div>
+      </div>`;
+    }).join('');
+  yrEl.innerHTML = rows || '<div class="loading">No evening data</div>';
+}
+
+async function loadAurora(){
+  const s = await fetchSolar();
+  if(!s) return;
+  const kpC = kpColor(s.kp), bzC = bzColor(s.bz);
+  document.getElementById('a-kp').textContent = s.kp.toFixed(1);
+  document.getElementById('a-kp').style.color = kpC;
+  document.getElementById('a-kp-label').textContent = s.kp>=5?'Strong activity':s.kp>=3?'Moderate':'Weak activity';
+  document.getElementById('a-kp-label').style.color = kpC;
+  document.getElementById('a-bz').textContent = (s.bz>=0?'+':'')+s.bz.toFixed(1)+' nT';
+  document.getElementById('a-bz').style.color = bzC;
+  document.getElementById('a-bz-label').textContent = s.bz<-5?'South — aurora active':s.bz<0?'Weak connection':'North — shielded';
+  document.getElementById('a-bz-label').style.color = bzC;
+  document.getElementById('a-speed').textContent = Math.round(s.speed);
+  document.getElementById('a-density').textContent = s.density.toFixed(1);
+  document.getElementById('a-bt').textContent = s.bt.toFixed(1);
+}
+
+// Windy model switcher
+let currentModel = 'iconEu';
+function setWindyModel(model){
+  currentModel = model;
+  const src = `https://embed.windy.com/embed2.html?lat=66.5&lon=25.73&detailLat=66.5&detailLon=25.73&width=400&height=320&zoom=5&level=surface&overlay=clouds&product=${model}&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+  document.getElementById('windy-iframe').src = src;
+  document.getElementById('badge-iconeu').style.color = model==='iconEu'?'#38bdf8':'rgba(255,255,255,0.3)';
+  document.getElementById('badge-iconeu').textContent = model==='iconEu'?'Active':'—';
+  document.getElementById('badge-ecmwf').style.color = model==='ecmwf'?'#38bdf8':'rgba(255,255,255,0.3)';
+  document.getElementById('badge-ecmwf').textContent = model==='ecmwf'?'Active':'—';
+}
+
+// Combined score
+async function renderCombinedScore(){
+  const el = document.getElementById('combined-score');
+  // Will update after both cloud and aurora data loaded
+  setTimeout(() => {
+    const rov = gridClouds.length > 0 ? gridClouds[Math.floor(gridPts.length/2)] : null;
+    const best = bestPt ? bestPt.cloud : null;
+    el.innerHTML = `
+      <div class="row">
+        <div style="font-size:12px;color:rgba(255,255,255,0.6)">Cloud cover (Rovaniemi)</div>
+        <div style="font-size:13px;font-weight:500;color:${rov!==null?cloudColor(rov):'#888'}">${rov!==null?rov+'%':'—'}</div>
+      </div>
+      <div class="row">
+        <div style="font-size:12px;color:rgba(255,255,255,0.6)">Best nearby spot</div>
+        <div style="font-size:13px;font-weight:500;color:${best!==null?cloudColor(best):'#888'}">${best!==null?best+'%':'—'}</div>
+      </div>
+    `;
+  }, 8000);
+}
+
+// PWA
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// Init all
+const tonightHours = getTonightHours();
+Promise.all([
+  loadClearSky(),
+  loadHourlyRov(tonightHours),
+  loadAurora(),
+]).catch(console.error);
+renderCombinedScore();
+loadYr();
+</script>
+</body>
+</html>
